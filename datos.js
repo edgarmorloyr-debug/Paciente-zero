@@ -105,5 +105,69 @@ window.DATOS = {
   },
 
   // lotes sin edificio
-  rellenos: ['parque', 'baldio', 'carros', 'barricada']
+  rellenos: ['parque', 'baldio', 'carros', 'barricada'],
+
+  // ---------- ambiente: hora del día y clima (DISENO.md, sección 3.7) ----------
+  // Los efectos solo cambian números. Cada efecto es un multiplicador (1 = normal):
+  //   vista: hasta dónde ves · zombiVelocidad · zombiCantidad · zombiDano · zombisDormidos
+  //   infeccionGolpe: infección por golpe · infeccionSola: lo que sube sola · estaminaGasto
+  //   ruidoDisparo: desde qué distancia tus disparos atraen zombis · deteccion: desde dónde te notan
+  //   dinero · premios
+  ambiente: {
+    duracionDia: 960,        // segundos de juego que dura un día completo (16 minutos)
+    vistaBase: 150,          // metros que se ven con vista 1
+    vistaMinima: 20,
+    transicionClima: 25,     // segundos que tarda en cambiar el clima
+    climaDura: [240, 360],   // segundos que dura cada clima
+    mezclaColorMapa: 0.25,   // cuánto conserva el cielo el color propio de cada mapa
+
+    // colores del cielo a lo largo del día (h = hora; noche: 0 de día, 1 de noche)
+    horas: [
+      { h: 0, cielo: 0x0b1020, luz: 0.32, sol: 0x7080b0, noche: 1 },
+      { h: 5, cielo: 0x0f1428, luz: 0.32, sol: 0x7080b0, noche: 1 },
+      { h: 6.5, cielo: 0xd89aa8, luz: 0.7, sol: 0xffc0b0, noche: 0.35 },
+      { h: 8.5, cielo: 0x9cc8ec, luz: 1.1, sol: 0xfff4e0, noche: 0 },
+      { h: 17, cielo: 0x9cc4e8, luz: 1.05, sol: 0xfff0d8, noche: 0 },
+      { h: 19, cielo: 0xe88a50, luz: 0.75, sol: 0xffa060, noche: 0.25 },
+      { h: 20.5, cielo: 0x141a30, luz: 0.34, sol: 0x7080b0, noche: 1 },
+      { h: 24, cielo: 0x0b1020, luz: 0.32, sol: 0x7080b0, noche: 1 }
+    ],
+
+    // momentos del día: desde qué hora hasta qué hora y sus efectos
+    momentos: [
+      { id: 'amanecer', nombre: 'Amanecer', desde: 5, hasta: 8, efectos: { vista: 0.75, zombisDormidos: 2 },
+        texto: 'Ves un poco menos · el doble de zombis dormidos' },
+      { id: 'dia', nombre: 'Día', desde: 8, hasta: 18, efectos: { vista: 1, zombiVelocidad: 0.9, zombiCantidad: 0.8 },
+        texto: 'Zombis 10 % más lentos y 20 % menos' },
+      { id: 'atardecer', nombre: 'Atardecer', desde: 18, hasta: 20, efectos: { vista: 0.85 },
+        texto: 'Normal' },
+      { id: 'noche', nombre: 'Noche', desde: 20, hasta: 5, efectos: { vista: 0.5, zombiVelocidad: 1.15, zombiCantidad: 1.3, dinero: 1.25 },
+        texto: 'Ves la mitad (linterna encendida) · zombis 15 % más rápidos y 30 % más · dinero +25 %' }
+    ],
+
+    // climas: peso = qué tan seguido sale; soloMapas = solo en esos mapas; color = tono del cielo
+    climas: [
+      { id: 'despejado', nombre: 'Despejado', peso: 4, efectos: {}, texto: 'Sin efecto',
+        color: null, mezcla: 0, luz: 1, lluvia: 0 },
+      { id: 'nublado', nombre: 'Nublado', peso: 3, efectos: { vista: 0.85 }, texto: 'Ves un 15 % menos',
+        color: 0x7a8088, mezcla: 0.45, luz: 0.8, lluvia: 0 },
+      { id: 'lluvia', nombre: 'Lluvia', peso: 2, efectos: { vista: 0.75, ruidoDisparo: 0.6, estaminaGasto: 1.1 },
+        texto: 'Ves un 25 % menos · tus disparos atraen zombis desde un 40 % menos lejos · estamina −10 %',
+        aviso: 'Empieza a llover: tus disparos se oyen menos', color: 0x5a6068, mezcla: 0.55, luz: 0.65, lluvia: 0.6 },
+      { id: 'tormenta', nombre: 'Tormenta', peso: 1, efectos: { vista: 0.6, ruidoDisparo: 0.6 },
+        texto: 'Ves un 40 % menos · los relámpagos lo iluminan todo · cada trueno atrae a los zombis cercanos',
+        aviso: 'Se viene una tormenta: cuidado con los truenos', color: 0x30343c, mezcla: 0.7, luz: 0.5, lluvia: 1, rayos: [6, 14] },
+      { id: 'niebla', nombre: 'Niebla', peso: 2, masEn: { puerto: 2 }, efectos: { vista: 0.4, deteccion: 0.6 },
+        texto: 'Ves un 60 % menos · los zombis te notan desde un 40 % menos lejos',
+        aviso: 'Baja la niebla: los zombis tampoco te ven bien', color: 0xb8bcc0, mezcla: 0.75, luz: 0.85, lluvia: 0 },
+      { id: 'calor', nombre: 'Ola de calor', peso: 2, soloMapas: ['pueblo', 'puerto'], efectos: { estaminaGasto: 1.25, infeccionSola: 1.2 },
+        texto: 'La estamina se gasta un 25 % más rápido · la infección sube sola un 20 % más rápido',
+        aviso: 'Ola de calor: te cansas más rápido', color: 0xf0c870, mezcla: 0.35, luz: 1.1, lluvia: 0 }
+    ],
+
+    // evento raro: solo de noche
+    lunaRoja: { nombre: 'Luna roja', prob: 0.05, efectos: { zombiDano: 1.25, infeccionGolpe: 1.5, premios: 2 },
+      texto: 'Zombis pegan un 25 % más · los golpes infectan un 50 % más · todos los premios ×2',
+      aviso: 'Sale la Luna roja: premios dobles, zombis furiosos', color: 0x6a1010, mezcla: 0.5 }
+  }
 };

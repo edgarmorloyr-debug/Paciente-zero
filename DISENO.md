@@ -110,6 +110,39 @@ En cada mapa la semilla elige qué edificio va en cada lote, con estas reglas:
 | 3 plantas | 10,0 m | 2 | Edificio de apartamentos (B), Laboratorio (D) |
 | 4 plantas | 13,2 m | 1 | Hospital (D) |
 
+### 3.7 Ambiente: hora del día y clima (14-10-2026)
+
+**Decisión del dueño:** el reloj avanza mientras juegas.
+- Un día completo dura 16 minutos de juego, y cada nivel empieza a una hora al azar (la decide la semilla).
+- El clima cambia cada 4 a 6 minutos, con una transición suave de unos 25 segundos y un aviso en pantalla.
+- La hora y el clima se ven siempre bajo el nombre del mapa. La pausa explica los efectos activos.
+- Todo se guarda con la partida.
+- Las cifras viven en `datos.js` (`ambiente`).
+
+**Momentos del día**
+
+| Momento | Horas | Efecto |
+|---|---|---|
+| Amanecer | 5:00-8:00 | Ves al 75 % · el doble de zombis dormidos |
+| Día | 8:00-18:00 | Zombis 10 % más lentos y 20 % menos |
+| Atardecer | 18:00-20:00 | Ves al 85 %; el resto, normal |
+| Noche | 20:00-5:00 | Ves la mitad (se enciende la linterna, las ventanas y los faroles) · zombis 15 % más rápidos y 30 % más · dinero +25 % |
+
+**Climas**
+
+| Clima | Qué tan seguido | Efecto |
+|---|---|---|
+| Despejado | Seguido | Ninguno |
+| Nublado | Seguido | Ves un 15 % menos |
+| Lluvia | Normal | Ves un 25 % menos · tus disparos atraen zombis desde un 40 % menos lejos · estamina −10 % |
+| Tormenta | Poco | Ves un 40 % menos · relámpagos cada 6-14 s que lo iluminan todo · cada trueno atrae a los zombis cercanos |
+| Niebla | Normal (el doble en el Puerto) | Ves un 60 % menos · los zombis te notan desde un 40 % menos lejos |
+| Ola de calor | Normal, solo en Pueblo y Puerto | Estamina se gasta un 25 % más · la infección sube sola un 20 % más rápido |
+
+**Evento raro: Luna roja.** El 5 % de las noches. Cielo rojo · los zombis pegan un 25 % más · los golpes infectan un 50 % más · todos los premios ×2.
+
+Los efectos que se suman (por ejemplo, Noche + Niebla) se multiplican. Los efectos sobre los zombis y el dinero empiezan a notarse cuando lleguen los zombis (paso 4); hoy ya se ven la vista, la luz, la lluvia y los avisos.
+
 ---
 
 ## 4. Los 40 edificios

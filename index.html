@@ -32,6 +32,12 @@
   #info { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 12px; display: flex; gap: 8px; align-items: flex-start; }
   #lugar { background: var(--panel); border: 1px solid var(--borde); border-radius: 10px; padding: 8px 12px; font-size: 14px; line-height: 1.35; }
   #lugar b { color: var(--verde); font-size: 16px; }
+  #ambiente-txt { margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(155, 227, 122, .25); color: #ffe2b0; }
+  #toast { position: absolute; left: 50%; top: max(84px, calc(env(safe-area-inset-top) + 72px)); transform: translate(-50%, -10px); opacity: 0; transition: opacity .4s, transform .4s; background: var(--panel); border: 1px solid #ffb347; color: #ffe2b0; border-radius: 12px; padding: 10px 16px; font-size: 16px; text-align: center; max-width: min(90vw, 460px); }
+  #toast.ver { opacity: 1; transform: translate(-50%, 0); }
+  @media (orientation: portrait) and (max-width: 600px) { #toast { top: max(140px, calc(env(safe-area-inset-top) + 128px)); } }
+  .efectos { margin: 12px 0 0; font-size: 14px; line-height: 1.5; color: var(--suave); text-align: left; }
+  .efectos b { color: #ffe2b0; }
   #btn-pausa { pointer-events: auto; width: 48px; height: 48px; border-radius: 10px; border: 1px solid var(--borde); background: var(--panel); color: var(--texto); font: 700 18px system-ui; cursor: pointer; }
   #mini { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 12px; width: 150px; height: 150px; border-radius: 50%; border: 2px solid rgba(155, 227, 122, .55); background: rgba(8, 12, 10, .75); pointer-events: auto; cursor: pointer; }
   #aviso { position: absolute; left: 50%; bottom: 28%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--borde); border-radius: 12px; padding: 10px 16px; font-size: 16px; text-align: center; display: none; max-width: 90vw; }
@@ -55,7 +61,8 @@
 <canvas id="vista"></canvas>
 
 <div id="hud">
-  <div id="info"><button id="btn-pausa" aria-label="Pausa">II</button><div id="lugar"></div></div>
+  <div id="info"><button id="btn-pausa" aria-label="Pausa">II</button><div id="lugar"><b id="lugar-nombre"></b><br><span id="lugar-semilla"></span><div id="ambiente-txt"></div></div></div>
+  <div id="toast"></div>
   <canvas id="mini" width="300" height="300" aria-label="Minimapa: tócalo para ver el mapa grande"></canvas>
   <div id="mira"></div>
   <div id="aviso"></div>
@@ -177,7 +184,8 @@ const render = new THREE.WebGLRenderer({ canvas: lienzo, antialias: !TACTIL, pow
 render.setPixelRatio(Math.min(devicePixelRatio || 1, TACTIL ? 1.25 : 1.75));
 const escena = new THREE.Scene(), camara = new THREE.PerspectiveCamera(72, 1, 0.1, 400);
 camara.rotation.order = 'YXZ';
-let mundo = null, ciudad = null, solidos = [], puertas = [];
+let mundo = null, ciudad = null, solidos = [], puertas = [], matsVentana = [], luzHemi = null, luzSol = null;
+const matFoco = new THREE.MeshBasicMaterial({ color: 0xd8d8c8 });
 const geoCaja = new THREE.BoxGeometry(1, 1, 1), geoPlano = new THREE.PlaneGeometry(1, 1);
 const matCache = {};
 const mat = (color, extra = {}) => { const k = color + JSON.stringify(extra); return matCache[k] || (matCache[k] = new THREE.MeshLambertMaterial({ color, ...extra })); };
@@ -186,20 +194,25 @@ const hex = n => '#' + n.toString(16).padStart(6, '0');
 
 function lienzoTex(w, h, dibujar) { const c = document.createElement('canvas'); c.width = w; c.height = h; dibujar(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t; }
 const texVentanas = {};
-function ventanas(cat, noche, rx, ry) {
-  const k = cat + noche;
-  if (!texVentanas[k]) texVentanas[k] = lienzoTex(128, 128, (g, w, h) => {
-    g.fillStyle = hex(D.categorias[cat].pared); g.fillRect(0, 0, w, h);
-    g.fillStyle = 'rgba(0,0,0,.12)'; for (let y = 0; y < h; y += 8) g.fillRect(0, y, w, 1);
-    const R = azar(cat.length * 97 + (noche ? 5 : 0));
-    for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) {
-      const encendida = R() < (noche ? 0.45 : 0.15);
-      g.fillStyle = encendida ? (noche ? '#ffd27a' : '#cfe3ef') : '#1b2228';
-      g.fillRect(14 + x * 64, 16 + y * 64, 36, 40);
-      g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(14 + x * 64, 54 + y * 64, 36, 4);
-    }
-  });
-  const t = texVentanas[k].clone(); t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); return t;
+// ventanas: la textura normal y una 'máscara' con las que se encienden de noche
+function ventanas(cat, rx, ry) {
+  if (!texVentanas[cat]) {
+    const R = azar(cat.length * 97 + cat.charCodeAt(0)), luces = [0, 1, 2, 3].map(() => R() < 0.5);
+    const pos = [[14, 16], [78, 16], [14, 80], [78, 80]];
+    texVentanas[cat] = {
+      base: lienzoTex(128, 128, (g, w, h) => {
+        g.fillStyle = hex(D.categorias[cat].pared); g.fillRect(0, 0, w, h);
+        g.fillStyle = 'rgba(0,0,0,.12)'; for (let y = 0; y < h; y += 8) g.fillRect(0, y, w, 1);
+        pos.forEach(([x, y], i) => { g.fillStyle = luces[i] ? '#3a4652' : '#1b2228'; g.fillRect(x, y, 36, 40); g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(x, y + 38, 36, 4); });
+      }),
+      brillo: lienzoTex(128, 128, (g, w, h) => {
+        g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
+        pos.forEach(([x, y], i) => { if (luces[i]) { g.fillStyle = '#ffd27a'; g.fillRect(x, y, 36, 38); } });
+      })
+    };
+  }
+  const copia = t => { const c = t.clone(); c.needsUpdate = true; c.wrapS = c.wrapT = THREE.RepeatWrapping; c.repeat.set(rx, ry); return c; };
+  return { map: copia(texVentanas[cat].base), emissiveMap: copia(texVentanas[cat].brillo) };
 }
 function letrero(texto, color) {
   return lienzoTex(512, 128, (g, w, h) => {
@@ -213,19 +226,18 @@ const LADOS = [[0, 1, 0], [0, -1, Math.PI], [1, 0, Math.PI / 2], [-1, 0, -Math.P
 const rect = (cx, cz, w, d) => ({ x0: cx - w / 2, x1: cx + w / 2, z0: cz - d / 2, z1: cz + d / 2 });
 
 function construir(c) {
-  if (mundo) { escena.remove(mundo); mundo.traverse(o => { if (o.material && o.material.userData.propio) { o.material.map.dispose(); o.material.dispose(); } }); }
-  mundo = new THREE.Group(); escena.add(mundo); solidos = []; puertas = [];
-  const M = c.mapa, R = azar(c.semilla + 1), noche = M.luz < 0.65;
-  escena.background = new THREE.Color(M.cielo); escena.fog = new THREE.Fog(M.niebla, 18, M.nieblaLejos);
-  mundo.add(new THREE.HemisphereLight(M.sol, 0x202018, M.luz + 0.25));
-  const sol = new THREE.DirectionalLight(M.sol, M.luz * 0.8); sol.position.set(60, 100, 40); mundo.add(sol);
+  if (mundo) { escena.remove(mundo); mundo.traverse(o => { if (o.material && o.material.userData.propio) { o.material.map.dispose(); if (o.material.emissiveMap) o.material.emissiveMap.dispose(); o.material.dispose(); } }); }
+  mundo = new THREE.Group(); escena.add(mundo); solidos = []; puertas = []; matsVentana = [];
+  const M = c.mapa, R = azar(c.semilla + 1);
+  // la luz y el cielo los maneja el ambiente (hora y clima), cuadro a cuadro
+  luzHemi = new THREE.HemisphereLight(0xffffff, 0x202018, 1); luzSol = new THREE.DirectionalLight(0xffffff, 0.8); mundo.add(luzHemi, luzSol, luzSol.target);
   // suelo y calles
   const suelo = new THREE.Mesh(geoPlano, mat(M.calle)); suelo.rotation.x = -Math.PI / 2; suelo.scale.set(c.ancho + 200, c.fondo + 200, 1); suelo.position.set(c.ancho / 2, 0, c.fondo / 2); mundo.add(suelo);
-  const linea = mat(noche ? 0x9a8a50 : 0xc8b870);
+  const linea = mat(0xb8a868);
   for (let i = 0; i <= M.w; i++) for (let j = 0; j < M.h; j++) caja(mundo, i * PASO + D.calle / 2, 0.02, D.calle + j * PASO + D.lote / 2, 0.18, 0.02, 3, linea);
   for (let j = 0; j <= M.h; j++) for (let i = 0; i < M.w; i++) caja(mundo, D.calle + i * PASO + D.lote / 2, 0.02, j * PASO + D.calle / 2, 3, 0.02, 0.18, linea);
   // postes de luz en los cruces
-  const cruces = (M.w + 1) * (M.h + 1), poste = new THREE.InstancedMesh(geoCaja, mat(0x2a2c2e), cruces), foco = new THREE.InstancedMesh(geoCaja, new THREE.MeshBasicMaterial({ color: noche ? 0xffe0a0 : 0xd8d8c8 }), cruces);
+  const cruces = (M.w + 1) * (M.h + 1), poste = new THREE.InstancedMesh(geoCaja, mat(0x2a2c2e), cruces), foco = new THREE.InstancedMesh(geoCaja, matFoco, cruces);
   const mx = new THREE.Matrix4(), q0 = new THREE.Quaternion(); let n = 0;
   for (let i = 0; i <= M.w; i++) for (let j = 0; j <= M.h; j++) {
     const x = i * PASO + 0.6, z = j * PASO + 0.6;
@@ -237,11 +249,11 @@ function construir(c) {
   const barrera = mat(0x8a8a82);
   caja(mundo, c.ancho / 2, 0.6, -0.3, c.ancho, 1.2, 0.6, barrera); caja(mundo, c.ancho / 2, 0.6, c.fondo + 0.3, c.ancho, 1.2, 0.6, barrera);
   caja(mundo, -0.3, 0.6, c.fondo / 2, 0.6, 1.2, c.fondo, barrera); caja(mundo, c.ancho + 0.3, 0.6, c.fondo / 2, 0.6, 1.2, c.fondo, barrera);
-  for (const l of c.lotes) edificio(l, M, noche);
+  for (const l of c.lotes) edificio(l, M);
   for (const r of c.rellenos) relleno(r, M, R);
 }
 
-function edificio(l, M, noche) {
+function edificio(l, M) {
   const e = l.ed, cat = D.categorias[e.cat], g = new THREE.Group(); mundo.add(g);
   caja(g, l.cx, 0.08, l.cz, l.ancho, 0.16, l.fondo, mat(M.acera));
   const m = 1.4, bw = l.ancho - m * 2, bd = l.fondo - m * 2, alto = l.alto;
@@ -270,8 +282,8 @@ function edificio(l, M, noche) {
     for (let p = 0; p <= l.pisos; p++) caja(g, l.cx, 0.31 + p * D.altoPiso, l.cz, bw, 0.3, bd, mat(0x6a6c6e));
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) caja(g, l.cx + sx * (bw / 2 - 0.5), l.pisos * D.altoPiso / 2 + 0.3, l.cz + sz * (bd / 2 - 0.5), 0.8, l.pisos * D.altoPiso, 0.8, mat(0x5a5c5e));
   } else {
-    const cuerpo = new THREE.Mesh(geoCaja, new THREE.MeshLambertMaterial({ map: ventanas(e.cat, noche, Math.max(1, Math.round(Math.max(bw, bd) / 3.5)) / 2, l.pisos / 2) }));
-    cuerpo.material.userData.propio = true; cuerpo.position.set(l.cx, alto / 2 + 0.16, l.cz); cuerpo.scale.set(bw, alto, bd); g.add(cuerpo);
+    const cuerpo = new THREE.Mesh(geoCaja, new THREE.MeshLambertMaterial({ ...ventanas(e.cat, Math.max(1, Math.round(Math.max(bw, bd) / 3.5)) / 2, l.pisos / 2), emissive: 0xffffff, emissiveIntensity: 0 }));
+    cuerpo.material.userData.propio = true; matsVentana.push(cuerpo.material); cuerpo.position.set(l.cx, alto / 2 + 0.16, l.cz); cuerpo.scale.set(bw, alto, bd); g.add(cuerpo);
     caja(g, l.cx, alto + 0.36, l.cz, bw + 0.6, 0.4, bd + 0.6, mat(cat.techo));
     if (e.id === 'iglesia') {
       caja(g, l.cx + bw * 0.3, alto + 3, l.cz - bd * 0.25, 3.5, 6, 3.5, mat(0x8e8778));
@@ -320,6 +332,115 @@ function relleno(r, M, R) {
   }
 }
 
+
+// ---------- ambiente: hora del día y clima ----------
+const AMB = D.ambiente, MOM = AMB.momentos, CLIMA = Object.fromEntries(AMB.climas.map(c => [c.id, c]));
+const amb = { hora: 12, clima: 'despejado', antes: 'despejado', mezcla: 1, quedan: 300, lunaRoja: false, rayo: 0, proxRayo: 8, R: Math.random, t: 0 };
+const col = new THREE.Color(), col2 = new THREE.Color();
+escena.add(camara);
+// linterna: se enciende sola de noche
+const linterna = new THREE.SpotLight(0xfff0d0, 0, 34, 0.5, 0.55, 1.2); linterna.position.set(0.3, -0.2, 0); camara.add(linterna); camara.add(linterna.target); linterna.target.position.set(0, -0.6, -6);
+// sol y luna
+const astro = new THREE.Mesh(new THREE.SphereGeometry(9, 16, 12), new THREE.MeshBasicMaterial({ color: 0xfff2c0, fog: false })); escena.add(astro);
+// lluvia: rayitas que caen alrededor del jugador
+const GOTAS = TACTIL ? 700 : 1400, lluviaPos = new Float32Array(GOTAS * 6);
+for (let i = 0; i < GOTAS; i++) { const x = (Math.random() - 0.5) * 50, y = Math.random() * 24, z = (Math.random() - 0.5) * 50; lluviaPos.set([x, y, z, x + 0.06, y - 0.7, z], i * 6); }
+const lluviaGeo = new THREE.BufferGeometry(); lluviaGeo.setAttribute('position', new THREE.BufferAttribute(lluviaPos, 3));
+const lluvia = new THREE.LineSegments(lluviaGeo, new THREE.LineBasicMaterial({ color: 0xa8b8c8, transparent: true, opacity: 0.55 })); lluvia.frustumCulled = false; escena.add(lluvia);
+
+const momentoDe = h => MOM.find(m => m.desde < m.hasta ? h >= m.desde && h < m.hasta : h >= m.desde || h < m.hasta);
+const esNoche = h => momentoDe(h).id === 'noche';
+function sortearClima() {
+  const op = AMB.climas.filter(c => !c.soloMapas || c.soloMapas.includes(ciudad.mapa.id));
+  const peso = c => c.peso * ((c.masEn && c.masEn[ciudad.mapa.id]) || 1);
+  let t = amb.R() * op.reduce((s, c) => s + peso(c), 0);
+  return (op.find(c => (t -= peso(c)) < 0) || op[0]).id;
+}
+const sortearDuracion = () => AMB.climaDura[0] + amb.R() * (AMB.climaDura[1] - AMB.climaDura[0]);
+function iniciarAmbiente(g) {
+  amb.R = azar(ciudad.semilla * 13 + ciudad.nivel);
+  amb.hora = g && g.hora != null ? g.hora : amb.R() * 24;
+  amb.clima = g && CLIMA[g.clima] ? g.clima : sortearClima(); amb.antes = amb.clima; amb.mezcla = 1;
+  amb.quedan = g && g.quedan ? g.quedan : sortearDuracion();
+  amb.lunaRoja = g && g.lunaRoja != null ? g.lunaRoja : esNoche(amb.hora) && amb.R() < AMB.lunaRoja.prob;
+  amb.rayo = 0; amb.proxRayo = 8;
+}
+// efectos activos: se multiplican los de la hora, el clima y la Luna roja
+function efectos() {
+  const e = {}, sumar = f => { for (const k in f) e[k] = (e[k] || 1) * f[k]; };
+  sumar(momentoDe(amb.hora).efectos); sumar(CLIMA[amb.clima].efectos); if (amb.lunaRoja) sumar(AMB.lunaRoja.efectos);
+  return e;
+}
+function avisar(texto) { const t = $('#toast'); t.textContent = texto; t.classList.add('ver'); clearTimeout(avisar.t); avisar.t = setTimeout(() => t.classList.remove('ver'), 4500); }
+function horaTexto(h) { const m = Math.floor((h % 1) * 60); return String(Math.floor(h)).padStart(2, '0') + ':' + String(m - m % 5).padStart(2, '0'); }
+function cieloEn(h) {
+  const H = AMB.horas; let i = 0; while (i < H.length - 2 && H[i + 1].h <= h) i++;
+  const a = H[i], b = H[i + 1], k = (h - a.h) / (b.h - a.h || 1);
+  return { cielo: col2.setHex(a.cielo).lerp(new THREE.Color(b.cielo), k).getHex(), sol: new THREE.Color(a.sol).lerp(new THREE.Color(b.sol), k), luz: a.luz + (b.luz - a.luz) * k, noche: a.noche + (b.noche - a.noche) * k };
+}
+function pasarTiempo(dt) {
+  const antes = amb.hora, eraNoche = esNoche(antes);
+  amb.hora = (amb.hora + dt * 24 / AMB.duracionDia) % 24;
+  const ahoraNoche = esNoche(amb.hora);
+  if (!eraNoche && ahoraNoche) { amb.lunaRoja = amb.R() < AMB.lunaRoja.prob; avisar(amb.lunaRoja ? AMB.lunaRoja.aviso : 'Cae la noche: se enciende tu linterna'); }
+  if (eraNoche && !ahoraNoche) { amb.lunaRoja = false; avisar('Amanece'); }
+  amb.quedan -= dt;
+  if (amb.quedan <= 0) {
+    const nuevo = sortearClima(); amb.quedan = sortearDuracion();
+    if (nuevo !== amb.clima) { amb.antes = amb.clima; amb.clima = nuevo; amb.mezcla = 0; avisar(CLIMA[nuevo].aviso || (nuevo === 'despejado' ? 'Se despeja el cielo' : 'Se nubla')); }
+  }
+  amb.mezcla = Math.min(1, amb.mezcla + dt / AMB.transicionClima);
+}
+// dibuja el ambiente: cielo, niebla, luces, linterna, lluvia y relámpagos
+function pintarAmbiente(dt) {
+  if (!ciudad || !luzHemi) return;
+  amb.t += dt;
+  const base = cieloEn(amb.hora), A = CLIMA[amb.antes], B = CLIMA[amb.clima], k = amb.mezcla, mix = (x, y) => x + (y - x) * k;
+  col.setHex(base.cielo).lerp(col2.setHex(ciudad.mapa.cielo), AMB.mezclaColorMapa * (1 - base.noche * 0.6));
+  if (A.color !== null && A.mezcla) col.lerp(col2.setHex(A.color), A.mezcla * (1 - k) * (1 - base.noche * 0.6));
+  if (B.color !== null && B.mezcla) col.lerp(col2.setHex(B.color), B.mezcla * k * (1 - base.noche * 0.6));
+  if (amb.lunaRoja) col.lerp(col2.setHex(AMB.lunaRoja.color), AMB.lunaRoja.mezcla);
+  // relámpagos
+  const rayos = B.rayos && k > 0.5;
+  if (rayos && estado === 'jugar') { amb.proxRayo -= dt; if (amb.proxRayo <= 0) { amb.rayo = 1; amb.proxRayo = B.rayos[0] + amb.R() * (B.rayos[1] - B.rayos[0]); } }
+  amb.rayo = Math.max(0, amb.rayo - dt * 3.5);
+  const destello = amb.rayo > 0.6 || (amb.rayo > 0.25 && amb.rayo < 0.4) ? amb.rayo : 0;
+  if (destello) col.lerp(col2.setHex(0xdde4ff), destello * 0.8);
+  escena.background = escena.background && escena.background.isColor ? escena.background.copy(col) : col.clone();
+  // niebla según cuánto se ve
+  const vista = Math.max(AMB.vistaMinima, AMB.vistaBase * (efectos().vista || 1) * (1 + destello * 1.5));
+  if (!escena.fog) escena.fog = new THREE.Fog(col, 10, vista);
+  escena.fog.color.copy(col); escena.fog.far += (vista - escena.fog.far) * Math.min(1, dt * 2); escena.fog.near = escena.fog.far * 0.12;
+  // luces
+  const luzClima = mix(A.luz, B.luz) * (amb.lunaRoja ? 0.8 : 1);
+  luzHemi.color.copy(base.sol); luzHemi.groundColor.setHex(amb.lunaRoja ? 0x401010 : 0x202018); luzHemi.intensity = (base.luz + 0.2) * luzClima + destello * 1.6;
+  luzSol.color.copy(base.sol); luzSol.intensity = base.luz * 0.8 * luzClima * (1 - base.noche * 0.7);
+  // posición del sol (de día) o de la luna (de noche)
+  const ang = (amb.hora - 6) / 12 * Math.PI, deDia = Math.sin(ang) > -0.05, alto = deDia ? Math.sin(ang) : -Math.sin(ang), lado = deDia ? Math.cos(ang) : -Math.cos(ang);
+  astro.position.set(camara.position.x + lado * 260, camara.position.y + Math.max(0.05, alto) * 200, camara.position.z - 120);
+  astro.material.color.setHex(deDia ? 0xfff2c0 : amb.lunaRoja ? 0xff3a2a : 0xdfe6ff); astro.visible = B.id !== 'niebla' && B.id !== 'tormenta' || k < 0.5;
+  luzSol.position.set(camara.position.x + lado * 100, 120 * Math.max(0.15, alto), camara.position.z - 50); luzSol.target.position.copy(camara.position);
+  // ventanas, faroles y linterna se encienden de noche
+  const noche = Math.max(base.noche, mix(A.luz < 0.6 ? 0.4 : 0, B.luz < 0.6 ? 0.4 : 0));
+  for (const m of matsVentana) m.emissiveIntensity = noche * 0.9;
+  matFoco.color.setHex(0xd8d8c8).lerp(col2.setHex(0xffe0a0), noche); matFoco.color.multiplyScalar(0.6 + noche * 0.9);
+  linterna.intensity = base.noche > 0.5 || (B.id === 'niebla' && k > 0.5 && base.noche > 0.2) ? 1.7 : 0;
+  // lluvia
+  const cantidad = mix(A.lluvia, B.lluvia);
+  lluvia.visible = cantidad > 0.02;
+  if (lluvia.visible) {
+    lluviaGeo.setDrawRange(0, Math.floor(GOTAS * cantidad) * 2);
+    const caida = dt * (B.id === 'tormenta' ? 30 : 22), pos = lluviaGeo.attributes.position.array;
+    for (let i = 0; i < GOTAS * 6; i += 6) { pos[i + 1] -= caida; pos[i + 4] -= caida; if (pos[i + 4] < 0) { pos[i + 1] += 24; pos[i + 4] += 24; } }
+    lluviaGeo.attributes.position.needsUpdate = true; lluvia.position.set(camara.position.x, 0, camara.position.z);
+  }
+}
+function textoAmbiente() { const m = momentoDe(amb.hora); return `${horaTexto(amb.hora)} · ${m.nombre} · ${CLIMA[amb.clima].nombre}${amb.lunaRoja ? ' · Luna roja' : ''}`; }
+function listaEfectos() {
+  const m = momentoDe(amb.hora), c = CLIMA[amb.clima];
+  return `<b>${m.nombre}:</b> ${m.texto}<br><b>${c.nombre}:</b> ${c.texto}` + (amb.lunaRoja ? `<br><b>${AMB.lunaRoja.nombre}:</b> ${AMB.lunaRoja.texto}` : '');
+}
+
 // ---------- jugador ----------
 const J = { x: 0, z: 0, giro: 0, cabeceo: 0 };
 const teclas = {};
@@ -334,7 +455,7 @@ function moverCon(dx, dz) {
 function leerGuardada() { try { const p = JSON.parse(localStorage.getItem(CLAVE)); return p && p.v === 1 && MAPA[p.mapa] ? p : null; } catch (e) { return null; } }
 function guardar() {
   if (!ciudad || !ciudad.enJuego) return;
-  const p = { v: 1, semilla: ciudad.semilla, mapa: ciudad.mapa.id, nivel: ciudad.nivel, x: +J.x.toFixed(2), z: +J.z.toFixed(2), giro: +J.giro.toFixed(3), vistos: ciudad.lotes.map((l, i) => l.visto ? i : -1).filter(i => i >= 0), fecha: new Date().toISOString() };
+  const p = { v: 1, semilla: ciudad.semilla, mapa: ciudad.mapa.id, nivel: ciudad.nivel, x: +J.x.toFixed(2), z: +J.z.toFixed(2), giro: +J.giro.toFixed(3), vistos: ciudad.lotes.map((l, i) => l.visto ? i : -1).filter(i => i >= 0), amb: { hora: +amb.hora.toFixed(3), clima: amb.clima, quedan: Math.round(amb.quedan), lunaRoja: amb.lunaRoja }, fecha: new Date().toISOString() };
   try { localStorage.setItem(CLAVE, JSON.stringify(p)); } catch (e) { /* sin espacio o modo privado: se juega igual */ }
 }
 setInterval(() => { if (estado === 'jugar') guardar(); }, 5000);
@@ -434,7 +555,8 @@ function prepararCiudad(s, m, nv) {
   const nivel = nv || 1, mapaId = m || mapaDelNivel(s, nivel);
   ciudad = generarCiudad(s, mapaId, nivel); construir(ciudad);
   J.x = Math.round(ciudad.mapa.w / 2) * PASO + D.calle / 2; J.z = ciudad.fondo - D.calle / 2; J.giro = 0; J.cabeceo = 0;
-  $('#lugar').innerHTML = `<b>${ciudad.mapa.nombre}</b><br>Semilla ${s}`;
+  $('#lugar-nombre').textContent = ciudad.mapa.nombre; $('#lugar-semilla').textContent = `Semilla ${s}`;
+  iniciarAmbiente(null);
   return ciudad;
 }
 function mostrarInicio() {
@@ -458,11 +580,12 @@ function continuar() {
   const g = leerGuardada(); if (!g) return;
   prepararCiudad(g.semilla, g.mapa, g.nivel);
   for (const i of g.vistos) if (ciudad.lotes[i]) ciudad.lotes[i].visto = true;
+  if (g.amb) iniciarAmbiente(g.amb);
   J.x = g.x; J.z = g.z; J.giro = g.giro || 0;
   jugar();
 }
 function nuevaPartida() { prepararCiudad(previa.semilla, previa.mapa, previa.nivel); jugar(); nuevaPrevia(semillaNueva()); }
-function pausar() { if (estado !== 'jugar') return; estado = 'pausa'; guardar(); $('#pausa-txt').innerHTML = `${ciudad.mapa.nombre} · Semilla ${ciudad.semilla}<br>Edificios vistos: ${ciudad.lotes.filter(l => l.visto).length} de ${ciudad.lotes.length}<br><small>La partida se guarda sola.</small>`; $('#pausa').classList.add('ver'); }
+function pausar() { if (estado !== 'jugar') return; estado = 'pausa'; guardar(); $('#pausa-txt').innerHTML = `${ciudad.mapa.nombre} · Semilla ${ciudad.semilla}<br>Edificios vistos: ${ciudad.lotes.filter(l => l.visto).length} de ${ciudad.lotes.length}<br><small>La partida se guarda sola.</small><div class="efectos">${textoAmbiente()}<br>${listaEfectos()}</div>`; $('#pausa').classList.add('ver'); }
 $('#btn-continuar').addEventListener('click', continuar);
 $('#btn-nueva').addEventListener('click', nuevaPartida);
 $('#btn-otra').addEventListener('click', () => { nuevaPrevia(semillaNueva()); mostrarInicio(); });
@@ -499,7 +622,10 @@ function cuadro(ahora) {
     if (cerca) { aviso.style.display = 'block'; aviso.innerHTML = `${cerca.lote.ed.nombre}<small>${D.categorias[cerca.lote.ed.cat].nombre} · pronto podrás entrar</small>`; }
     else aviso.style.display = 'none';
   }
-  camara.position.set(J.x, D.jugador.alto, J.z); camara.rotation.set(J.cabeceo, J.giro, 0);
+  if (estado === 'jugar') pasarTiempo(dt);
+  camara.position.set(J.x, D.jugador.alto, J.z); camara.rotation.set(J.cabeceo, J.giro, CLIMA[amb.clima].id === 'calor' ? Math.sin(amb.t * 1.7) * 0.004 * amb.mezcla : 0);
+  pintarAmbiente(dt);
+  if ((cuentaMini & 15) === 0 || estado !== 'jugar') $('#ambiente-txt').textContent = textoAmbiente();
   render.render(escena, camara);
   if (estado === 'jugar' && ++cuentaMini % 3 === 0) dibujarMini();
 }
@@ -511,7 +637,7 @@ const q = new URLSearchParams(location.search);
 nuevaPrevia(+q.get('semilla') || semillaNueva(), MAPA[q.get('mapa')] ? q.get('mapa') : null);
 mostrarInicio();
 requestAnimationFrame(cuadro);
-window.__pc = { get ciudad() { return ciudad; }, get estado() { return estado; }, J, generarCiudad, continuar, nuevaPartida, guardar, leerGuardada, abrirMapa };
+window.__pc = { get ciudad() { return ciudad; }, get estado() { return estado; }, J, amb, efectos, CLIMA, pasarTiempo, avisar, generarCiudad, continuar, nuevaPartida, guardar, leerGuardada, abrirMapa };
 </script>
 </body>
 </html>
