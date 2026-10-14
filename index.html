@@ -266,15 +266,15 @@ function edificio(l, M, noche) {
     const carpa = new THREE.Mesh(new THREE.ConeGeometry(r, alto, 8), mat(0x6a2a7a)); carpa.position.set(l.cx, alto / 2 + 0.16, l.cz); g.add(carpa);
     const franja = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.98, r, 1.6, 8), mat(0xe0b040)); franja.position.set(l.cx, 0.96, l.cz); g.add(franja);
   } else if (e.id === 'estacionamiento') {
-    for (let p = 0; p < 4; p++) caja(g, l.cx, 0.31 + p * 3.2, l.cz, bw, 0.3, bd, mat(0x6a6c6e));
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) caja(g, l.cx + sx * (bw / 2 - 0.5), 4.8, l.cz + sz * (bd / 2 - 0.5), 0.8, 9.6, 0.8, mat(0x5a5c5e));
+    for (let p = 0; p < 3; p++) caja(g, l.cx, 0.31 + p * 3.2, l.cz, bw, 0.3, bd, mat(0x6a6c6e));
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) caja(g, l.cx + sx * (bw / 2 - 0.5), 3.3, l.cz + sz * (bd / 2 - 0.5), 0.8, 6.6, 0.8, mat(0x5a5c5e));
   } else {
-    const cuerpo = new THREE.Mesh(geoCaja, new THREE.MeshLambertMaterial({ map: ventanas(e.cat, noche, Math.max(1, Math.round(Math.max(bw, bd) / 4.5)), Math.max(1, Math.round(alto / 3.6))) }));
+    const cuerpo = new THREE.Mesh(geoCaja, new THREE.MeshLambertMaterial({ map: ventanas(e.cat, noche, Math.max(1, Math.round(Math.max(bw, bd) / 3.5)) / 2, Math.max(1, Math.round(alto / 3.2)) / 2) }));
     cuerpo.material.userData.propio = true; cuerpo.position.set(l.cx, alto / 2 + 0.16, l.cz); cuerpo.scale.set(bw, alto, bd); g.add(cuerpo);
     caja(g, l.cx, alto + 0.36, l.cz, bw + 0.6, 0.4, bd + 0.6, mat(cat.techo));
     if (e.id === 'iglesia') {
-      caja(g, l.cx + bw * 0.3, alto + 4, l.cz - bd * 0.25, 4, 8, 4, mat(0x8e8778));
-      const punta = new THREE.Mesh(new THREE.ConeGeometry(3, 5, 4), mat(cat.techo)); punta.position.set(l.cx + bw * 0.3, alto + 10.5, l.cz - bd * 0.25); punta.rotation.y = Math.PI / 4; g.add(punta);
+      caja(g, l.cx + bw * 0.3, alto + 3, l.cz - bd * 0.25, 3.5, 6, 3.5, mat(0x8e8778));
+      const punta = new THREE.Mesh(new THREE.ConeGeometry(3, 5, 4), mat(cat.techo)); punta.position.set(l.cx + bw * 0.3, alto + 8.5, l.cz - bd * 0.25); punta.rotation.y = Math.PI / 4; g.add(punta);
     }
     if (e.cat === 'minijuego') caja(g, l.cx, alto + 0.6, l.cz, bw + 0.7, 0.12, bd + 0.7, new THREE.MeshBasicMaterial({ color: new THREE.Color(cat.letrero) }));
     if (e.cat === 'jefe') for (const s of [-1, 1]) caja(g, l.cx + s * bw * 0.35, alto + 1.2, l.cz, 0.6, 1.2, 0.6, new THREE.MeshBasicMaterial({ color: 0xff3030 }));
@@ -286,8 +286,9 @@ function edificio(l, M, noche) {
   const puerta = new THREE.Mesh(geoPlano, mat(0x14100c)); puerta.position.set(fx + dx * 0.03, 1.6, fz + dz * 0.03); puerta.rotation.y = giro; puerta.scale.set(2.4, 3, 1); g.add(puerta);
   if (e.cat === 'tienda') { const toldo = caja(g, fx + dx * 0.9, 3.6, fz + dz * 0.9, dx ? 1.8 : 4.2, 0.2, dx ? 4.2 : 1.8, mat(0xc0502a)); toldo.rotation.set(dz * 0.18, 0, -dx * 0.18); }
   puertas.push({ x: fx + dx * 1.4, z: fz + dz * 1.4, lote: l });
-  const altoCartel = e.id === 'zafira' ? 3.8 : Math.min(alto - 0.8, 4.6);
-  cartel(g, e, cat, fx + dx * 0.06, altoCartel, fz + dz * 0.06, giro, Math.min(frente * 0.8, 11));
+  // el letrero va justo encima de la puerta, aunque el edificio sea bajo
+  const anchoCartel = Math.min(frente * 0.8, 9), altoCartel = 3.5 + anchoCartel / 8;
+  cartel(g, e, cat, fx + dx * 0.06, altoCartel, fz + dz * 0.06, giro, anchoCartel);
 }
 function cartel(g, e, cat, x, y, z, giro, ancho) {
   const m = new THREE.Mesh(geoPlano, new THREE.MeshBasicMaterial({ map: letrero(e.nombre, cat.letrero) }));

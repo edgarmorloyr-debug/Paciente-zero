@@ -11,7 +11,7 @@ window.DATOS = {
   tamanos: { A: [1, 1], B: [2, 1], C: [2, 2], D: [3, 3] },
 
   // altura de los edificios por tamaño [mínima, máxima]
-  alturas: { A: [5, 7], B: [7, 10], C: [9, 13], D: [15, 21] },
+  alturas: { A: [4, 5], B: [4.5, 6.5], C: [6, 8.5], D: [8.5, 12] },
 
   // los 6 tipos de mapa: cuadrícula ancho x fondo y cuántos lotes de cada tamaño
   mapas: [
