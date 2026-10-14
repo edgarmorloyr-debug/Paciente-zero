@@ -40,7 +40,7 @@
   .efectos b { color: #ffe2b0; }
   #btn-pausa { pointer-events: auto; width: 48px; height: 48px; border-radius: 10px; border: 1px solid var(--borde); background: var(--panel); color: var(--texto); font: 700 18px system-ui; cursor: pointer; }
   #mini { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 12px; width: 150px; height: 150px; border-radius: 50%; border: 2px solid rgba(155, 227, 122, .55); background: rgba(8, 12, 10, .75); pointer-events: auto; cursor: pointer; }
-  #aviso { position: absolute; left: 50%; bottom: 28%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--borde); border-radius: 12px; padding: 10px 16px; font-size: 16px; text-align: center; display: none; max-width: 90vw; }
+  #aviso { position: absolute; left: 50%; bottom: 38%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--borde); border-radius: 12px; padding: 10px 16px; font-size: 16px; text-align: center; display: none; max-width: 90vw; }
   #aviso small { display: block; font-size: 14px; color: var(--suave); margin-top: 2px; }
   #mira { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: rgba(255, 255, 255, .7); }
   #palanca { position: absolute; width: 120px; height: 120px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .3); background: rgba(255, 255, 255, .06); display: none; }
@@ -55,6 +55,72 @@
   #mapa-grande canvas { width: min(92vw, calc(100vh - 220px)); height: min(92vw, calc(100vh - 220px)); }
   #mapa-grande .cerrar { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 12px; width: auto; padding: 0 18px; background: var(--panel); }
   @media (orientation: portrait) and (max-width: 600px) { #mini { width: 112px; height: 112px; } }
+  /* ---------- jugabilidad ---------- */
+  #hud-juego { position: fixed; inset: 0; pointer-events: none; z-index: 11; display: none; }
+  #hud-juego.ver { display: block; }
+  #velo, #verdoso, #ojo { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+  #velo { box-shadow: inset 0 0 160px 60px rgba(200, 0, 0, .9); }
+  #verdoso { box-shadow: inset 0 0 200px 90px rgba(60, 200, 40, .8); }
+  #ojo { background: radial-gradient(circle, transparent 40%, rgba(255, 180, 60, .5)); }
+  #pistas { position: absolute; left: 50%; top: max(12px, env(safe-area-inset-top)); transform: translateX(-50%); background: var(--panel); border: 1px solid var(--borde); border-radius: 10px; padding: 6px 12px; font-size: 14px; color: #ffe2b0; max-width: 46vw; text-align: center; }
+  #jefe { position: absolute; left: 50%; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 70px); transform: translateX(-50%); width: min(420px, 44vw); display: none; text-align: center; font-size: 16px; font-weight: 700; color: #ff9c8c; text-shadow: 0 1px 3px #000; }
+  #jefe b { display: block; height: 12px; margin-top: 4px; background: rgba(0, 0, 0, .6); border: 1px solid #ff9c8c; border-radius: 6px; overflow: hidden; }
+  #jefe i { display: block; height: 100%; background: #d83a2a; }
+  #flotante { position: absolute; left: 50%; top: 40%; transform: translate(-50%, 0); font-size: 20px; font-weight: 700; color: #ffe2b0; text-shadow: 0 2px 4px #000; opacity: 0; white-space: nowrap; }
+  #flotante.ver { animation: flota 1.3s ease-out; }
+  @keyframes flota { 0% { opacity: 0; transform: translate(-50%, 10px); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -30px); } }
+  #reloj-mini { position: absolute; left: 50%; top: 30%; transform: translateX(-50%); font-size: 32px; font-weight: 800; color: #fff; text-shadow: 0 2px 6px #000; display: none; }
+  #reloj-mini.ver { display: block; }
+  #barras { position: absolute; left: 12px; bottom: max(14px, env(safe-area-inset-bottom)); width: min(260px, 40vw); display: flex; flex-direction: column; gap: 6px; }
+  .barra { position: relative; height: 22px; background: rgba(0, 0, 0, .55); border: 1px solid rgba(255, 255, 255, .25); border-radius: 6px; overflow: hidden; }
+  .barra i { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transition: width .2s; }
+  #b-vida i { background: #d84a3a; } #b-est i { background: #e0b030; }
+  .barra span { position: relative; padding-left: 8px; font-size: 14px; line-height: 22px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px #000; }
+  #dinero { font-size: 18px; font-weight: 800; color: #ffd84a; text-shadow: 0 1px 3px #000; }
+  #efecto-vac { font-size: 14px; color: #b9e8ff; text-shadow: 0 1px 2px #000; }
+  #vacunas { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 8px; pointer-events: auto; }
+  #vacunas button { width: 64px; min-height: 52px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .3); background: var(--panel); color: var(--texto); font: 600 14px system-ui; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; padding: 2px; }
+  #vacunas button i { width: 10px; height: 18px; border-radius: 4px; background: var(--c, #333); }
+  #vacunas button:disabled { opacity: .45; }
+  #municion { position: absolute; right: 12px; bottom: max(14px, env(safe-area-inset-bottom)); text-align: right; font-size: 16px; color: #fff; text-shadow: 0 1px 3px #000; }
+  #municion b { font-size: 34px; }
+  #municion small { font-size: 14px; color: #e0d6c0; }
+  #botones { display: none; }
+  .touch #botones { display: block; }
+  .touch #municion { bottom: auto; top: calc(max(12px, env(safe-area-inset-top)) + 160px); }
+  @media (max-height: 500px) { #mini { width: 110px !important; height: 110px !important; } .touch #municion { top: calc(max(12px, env(safe-area-inset-top)) + 120px); } }
+  #botones button { position: absolute; pointer-events: auto; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .45); background: rgba(10, 14, 12, .55); color: #fff; font: 700 14px system-ui; width: 64px; height: 64px; }
+  #btn-disparar { right: 20px; bottom: 84px; width: 96px !important; height: 96px !important; background: rgba(255, 138, 31, .85) !important; border-color: #ff8a1f !important; color: #1a0d00 !important; font-size: 16px !important; }
+  #btn-recargar { right: 128px; bottom: 60px; }
+  #btn-usar { right: 128px; bottom: 134px; display: none; background: rgba(155, 227, 122, .3) !important; border-color: #9be37a !important; }
+  #btn-usar.ver { display: block; }
+  #btn-cambiar { right: 46px; bottom: 192px; }
+  #btn-hab { right: 202px; bottom: 60px; font-size: 14px !important; line-height: 1.1; background: conic-gradient(rgba(255, 200, 80, .6) var(--p, 0%), rgba(10, 14, 12, .55) 0) !important; }
+  #btn-hab.lista { border-color: #ffd84a !important; box-shadow: 0 0 16px #ffd84a; }
+  @media (orientation: portrait) and (max-width: 600px) {
+    #barras { width: 44vw; } #pistas { top: auto; bottom: 200px; max-width: 70vw; }
+    #vacunas { left: 12px; transform: none; bottom: 150px; flex-direction: column; } #vacunas button { width: 56px; }
+  }
+  .tarjeta.ancha { width: min(680px, 100%); }
+  #personajes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 8px 0; }
+  .pj { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px; border-radius: 12px; border: 2px solid var(--borde); background: rgba(255, 255, 255, .03); color: var(--texto); font: 15px system-ui; cursor: pointer; min-height: 48px; }
+  .pj img { width: 84px; height: 84px; object-fit: cover; border-radius: 10px; background: #222; }
+  .pj small { font-size: 14px; color: var(--suave); }
+  .pj .vent { color: #ffe2b0; }
+  .pj.activo { border-color: var(--naranja); background: rgba(255, 138, 31, .14); }
+  .btn:disabled { opacity: .45; }
+  #panel-cuerpo { text-align: left; max-height: 58vh; overflow-y: auto; }
+  .fila { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255, 255, 255, .1); }
+  .fila b { display: block; font-size: 16px; }
+  .fila small { display: block; font-size: 14px; color: var(--suave); line-height: 1.35; }
+  .btn-comprar { flex: none; min-width: 88px; min-height: 48px; border-radius: 10px; border: 2px solid var(--verde); background: rgba(155, 227, 122, .12); color: var(--verde); font: 700 16px system-ui; cursor: pointer; }
+  .btn-comprar:disabled { opacity: .4; }
+  .nota { font-size: 15px; line-height: 1.5; color: var(--suave); }
+  .rodillos { display: flex; gap: 8px; justify-content: center; margin: 8px 0; }
+  .rodillos span { min-width: 92px; padding: 14px 6px; border-radius: 10px; background: #1a1220; border: 2px solid #e09cff; text-align: center; font-weight: 700; font-size: 15px; }
+  .tablero { display: grid; grid-template-columns: repeat(3, 72px); gap: 6px; justify-content: center; margin: 10px 0; }
+  .tablero button { width: 72px; height: 72px; border-radius: 10px; border: 2px solid var(--borde); background: rgba(255, 255, 255, .05); color: #fff; font: 800 32px system-ui; cursor: pointer; }
+
 </style>
 </head>
 <body>
@@ -68,6 +134,56 @@
   <div id="aviso"></div>
   <div id="palanca"><i></i></div>
   <div id="pista-tactil">Dedo izquierdo: caminar (hasta el borde para correr) · Dedo derecho: mirar</div>
+</div>
+
+<div id="hud-juego">
+  <div id="velo"></div><div id="verdoso"></div><div id="ojo"></div>
+  <div id="pistas"></div>
+  <div id="jefe"><span></span><b><i></i></b></div>
+  <div id="flotante"></div>
+  <div id="reloj-mini"></div>
+  <div id="barras">
+    <div class="barra" id="b-vida"><i></i><span></span></div>
+    <div class="barra" id="b-est"><i></i><span></span></div>
+    <div class="barra" id="b-inf"><i></i><span></span></div>
+    <div id="dinero"></div>
+    <div id="efecto-vac"></div>
+  </div>
+  <div id="vacunas"></div>
+  <div id="municion"></div>
+  <div id="botones">
+    <button id="btn-hab" aria-label="Ojo muerto">Ojo<br>muerto</button>
+    <button id="btn-cambiar" aria-label="Cambiar de arma">Arma</button>
+    <button id="btn-recargar" aria-label="Recargar">Recargar</button>
+    <button id="btn-usar" aria-label="Usar">Usar</button>
+    <button id="btn-disparar" aria-label="Disparar">Disparar</button>
+  </div>
+</div>
+
+<div class="capa" id="elegir">
+  <div class="tarjeta ancha">
+    <h2>Elige tu personaje</h2>
+    <div id="personajes"></div>
+    <button class="btn principal" id="btn-empezar" disabled>Empezar</button>
+    <button class="btn" id="btn-volver-pj">Volver</button>
+  </div>
+</div>
+
+<div class="capa" id="panel">
+  <div class="tarjeta ancha">
+    <h2 id="panel-titulo"></h2>
+    <div class="sub" id="panel-dinero"></div>
+    <div id="panel-cuerpo"></div>
+    <button class="btn" id="panel-cerrar">Salir</button>
+  </div>
+</div>
+
+<div class="capa" id="fin">
+  <div class="tarjeta">
+    <h2 id="fin-titulo"></h2>
+    <p class="ciudad" id="fin-txt"></p>
+    <button class="btn principal" id="btn-fin">Volver al inicio</button>
+  </div>
 </div>
 
 <div class="capa ver" id="inicio">
@@ -103,10 +219,12 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="datos.js"></script>
+<script src="kit.js"></script>
 <script>
 'use strict';
 const D = window.DATOS, $ = s => document.querySelector(s);
 const TACTIL = 'ontouchstart' in window || matchMedia('(pointer: coarse)').matches;
+if (TACTIL) document.documentElement.classList.add('touch');
 const PASO = D.lote + D.calle;
 const EDIF = Object.fromEntries(D.edificios.map(e => [e.id, e]));
 const MAPA = Object.fromEntries(D.mapas.map(m => [m.id, m]));
@@ -185,6 +303,7 @@ render.setPixelRatio(Math.min(devicePixelRatio || 1, TACTIL ? 1.25 : 1.75));
 const escena = new THREE.Scene(), camara = new THREE.PerspectiveCamera(72, 1, 0.1, 400);
 camara.rotation.order = 'YXZ';
 let mundo = null, ciudad = null, solidos = [], puertas = [], matsVentana = [], luzHemi = null, luzSol = null;
+let limites = null, bajoTecho = false; // dentro de un edificio: límites de la sala y sin lluvia
 const matFoco = new THREE.MeshBasicMaterial({ color: 0xd8d8c8 });
 const geoCaja = new THREE.BoxGeometry(1, 1, 1), geoPlano = new THREE.PlaneGeometry(1, 1);
 const matCache = {};
@@ -408,7 +527,7 @@ function pintarAmbiente(dt) {
   if (destello) col.lerp(col2.setHex(0xdde4ff), destello * 0.8);
   escena.background = escena.background && escena.background.isColor ? escena.background.copy(col) : col.clone();
   // niebla según cuánto se ve
-  const vista = Math.max(AMB.vistaMinima, AMB.vistaBase * (efectos().vista || 1) * (1 + destello * 1.5));
+  const vista = bajoTecho ? 60 : Math.max(AMB.vistaMinima, AMB.vistaBase * (efectos().vista || 1) * (1 + destello * 1.5));
   if (!escena.fog) escena.fog = new THREE.Fog(col, 10, vista);
   escena.fog.color.copy(col); escena.fog.far += (vista - escena.fog.far) * Math.min(1, dt * 2); escena.fog.near = escena.fog.far * 0.12;
   // luces
@@ -418,16 +537,16 @@ function pintarAmbiente(dt) {
   // posición del sol (de día) o de la luna (de noche)
   const ang = (amb.hora - 6) / 12 * Math.PI, deDia = Math.sin(ang) > -0.05, alto = deDia ? Math.sin(ang) : -Math.sin(ang), lado = deDia ? Math.cos(ang) : -Math.cos(ang);
   astro.position.set(camara.position.x + lado * 260, camara.position.y + Math.max(0.05, alto) * 200, camara.position.z - 120);
-  astro.material.color.setHex(deDia ? 0xfff2c0 : amb.lunaRoja ? 0xff3a2a : 0xdfe6ff); astro.visible = B.id !== 'niebla' && B.id !== 'tormenta' || k < 0.5;
+  astro.material.color.setHex(deDia ? 0xfff2c0 : amb.lunaRoja ? 0xff3a2a : 0xdfe6ff); astro.visible = !bajoTecho && (B.id !== 'niebla' && B.id !== 'tormenta' || k < 0.5);
   luzSol.position.set(camara.position.x + lado * 100, 120 * Math.max(0.15, alto), camara.position.z - 50); luzSol.target.position.copy(camara.position);
   // ventanas, faroles y linterna se encienden de noche
   const noche = Math.max(base.noche, mix(A.luz < 0.6 ? 0.4 : 0, B.luz < 0.6 ? 0.4 : 0));
   for (const m of matsVentana) m.emissiveIntensity = noche * 0.9;
   matFoco.color.setHex(0xd8d8c8).lerp(col2.setHex(0xffe0a0), noche); matFoco.color.multiplyScalar(0.6 + noche * 0.9);
-  linterna.intensity = base.noche > 0.5 || (B.id === 'niebla' && k > 0.5 && base.noche > 0.2) ? 1.7 : 0;
+  linterna.intensity = bajoTecho ? 0 : base.noche > 0.5 || (B.id === 'niebla' && k > 0.5 && base.noche > 0.2) ? 1.7 : 0;
   // lluvia
   const cantidad = mix(A.lluvia, B.lluvia);
-  lluvia.visible = cantidad > 0.02;
+  lluvia.visible = cantidad > 0.02 && !bajoTecho;
   if (lluvia.visible) {
     lluviaGeo.setDrawRange(0, Math.floor(GOTAS * cantidad) * 2);
     const caida = dt * (B.id === 'tormenta' ? 30 : 22), pos = lluviaGeo.attributes.position.array;
@@ -446,7 +565,8 @@ const J = { x: 0, z: 0, giro: 0, cabeceo: 0 };
 const teclas = {};
 let estado = 'inicio', bloqueado = false;
 function moverCon(dx, dz) {
-  const r = D.jugador.radio, choca = (x, z) => x < r || z < r || x > ciudad.ancho - r || z > ciudad.fondo - r || solidos.some(s => x > s.x0 - r && x < s.x1 + r && z > s.z0 - r && z < s.z1 + r);
+  const r = D.jugador.radio, L = limites || { x0: 0, x1: ciudad.ancho, z0: 0, z1: ciudad.fondo };
+  const choca = (x, z) => x < L.x0 + r || z < L.z0 + r || x > L.x1 - r || z > L.z1 - r || solidos.some(s => x > s.x0 - r && x < s.x1 + r && z > s.z0 - r && z < s.z1 + r);
   if (!choca(J.x + dx, J.z)) J.x += dx;
   if (!choca(J.x, J.z + dz)) J.z += dz;
 }
@@ -456,6 +576,7 @@ function leerGuardada() { try { const p = JSON.parse(localStorage.getItem(CLAVE)
 function guardar() {
   if (!ciudad || !ciudad.enJuego) return;
   const p = { v: 1, semilla: ciudad.semilla, mapa: ciudad.mapa.id, nivel: ciudad.nivel, x: +J.x.toFixed(2), z: +J.z.toFixed(2), giro: +J.giro.toFixed(3), vistos: ciudad.lotes.map((l, i) => l.visto ? i : -1).filter(i => i >= 0), amb: { hora: +amb.hora.toFixed(3), clima: amb.clima, quedan: Math.round(amb.quedan), lunaRoja: amb.lunaRoja }, fecha: new Date().toISOString() };
+  if (window.JUEGO && JUEGO.activo) { p.juego = JUEGO.guardado(); if (JUEGO.dentro && p.juego.afuera) { p.x = p.juego.afuera.x; p.z = p.juego.afuera.z; } }
   try { localStorage.setItem(CLAVE, JSON.stringify(p)); } catch (e) { /* sin espacio o modo privado: se juega igual */ }
 }
 setInterval(() => { if (estado === 'jugar') guardar(); }, 5000);
@@ -525,7 +646,9 @@ function dibujarMapa(g, W, H, conNombres, px1 = 1) {
   }
   // jugador: flecha naranja que apunta hacia donde mira
   if (conNombres) mapaEsc = { esc, ox, oy, px1 };
-  const px = ox + J.x * esc, py = oy + J.z * esc, s = (conNombres ? 12 : 12) * px1;
+  if (window.JUEGO) JUEGO.dibujarMapa(g, esc, ox, oy, conNombres, px1);
+  const pos = window.JUEGO && JUEGO.dentro ? JUEGO.posMapa() : J;
+  const px = ox + pos.x * esc, py = oy + pos.z * esc, s = 12 * px1;
   g.save(); g.translate(px, py); g.rotate(-J.giro); g.fillStyle = '#ff8a1f'; g.strokeStyle = '#fff'; g.lineWidth = 2;
   g.beginPath(); g.moveTo(0, -s); g.lineTo(s * 0.7, s * 0.8); g.lineTo(0, s * 0.35); g.lineTo(-s * 0.7, s * 0.8); g.closePath(); g.fill(); g.stroke(); g.restore();
 }
@@ -573,7 +696,7 @@ function nuevaPrevia(s, m) { const nivel = m ? MAPA[m].nivel : 1; previa = { sem
 function jugar() {
   ciudad.enJuego = true; estado = 'jugar'; guardar();
   $('#inicio').classList.remove('ver'); $('#pausa').classList.remove('ver'); $('#hud').classList.add('ver');
-  if (TACTIL) $('#pista-tactil').style.display = 'block'; else if (lienzo.requestPointerLock) lienzo.requestPointerLock();
+  if (TACTIL && !(window.JUEGO && JUEGO.activo)) $('#pista-tactil').style.display = 'block'; else if (TACTIL) $('#pista-tactil').style.display = 'none'; else if (lienzo.requestPointerLock) lienzo.requestPointerLock();
   history.replaceState(null, '', location.pathname);
 }
 function continuar() {
@@ -582,20 +705,25 @@ function continuar() {
   for (const i of g.vistos) if (ciudad.lotes[i]) ciudad.lotes[i].visto = true;
   if (g.amb) iniciarAmbiente(g.amb);
   J.x = g.x; J.z = g.z; J.giro = g.giro || 0;
-  jugar();
+  if (g.juego) { ciudad.enJuego = true; JUEGO.cargar(g.juego); jugar(); }
+  else JUEGO.elegirPersonaje(per => { ciudad.enJuego = true; JUEGO.nuevaPartida(per); jugar(); });
 }
-function nuevaPartida() { prepararCiudad(previa.semilla, previa.mapa, previa.nivel); jugar(); nuevaPrevia(semillaNueva()); }
+function nuevaPartida() {
+  const pr = previa;
+  JUEGO.elegirPersonaje(per => { prepararCiudad(pr.semilla, pr.mapa, pr.nivel); ciudad.enJuego = true; JUEGO.nuevaPartida(per); jugar(); });
+  nuevaPrevia(semillaNueva());
+}
 function pausar() { if (estado !== 'jugar') return; estado = 'pausa'; guardar(); $('#pausa-txt').innerHTML = `${ciudad.mapa.nombre} · Semilla ${ciudad.semilla}<br>Edificios vistos: ${ciudad.lotes.filter(l => l.visto).length} de ${ciudad.lotes.length}<br><small>La partida se guarda sola.</small><div class="efectos">${textoAmbiente()}<br>${listaEfectos()}</div>`; $('#pausa').classList.add('ver'); }
 $('#btn-continuar').addEventListener('click', continuar);
 $('#btn-nueva').addEventListener('click', nuevaPartida);
 $('#btn-otra').addEventListener('click', () => { nuevaPrevia(semillaNueva()); mostrarInicio(); });
 $('#btn-seguir').addEventListener('click', jugar);
-$('#btn-inicio').addEventListener('click', () => { guardar(); mostrarInicio(); });
+$('#btn-inicio').addEventListener('click', () => { guardar(); JUEGO.salirAlInicio(); mostrarInicio(); });
 $('#btn-pausa').addEventListener('click', () => { if (document.exitPointerLock) document.exitPointerLock(); pausar(); });
 for (const m of D.mapas) { const b = document.createElement('button'); b.className = 'chip'; b.dataset.m = m.id; b.textContent = m.nombre; b.onclick = () => { nuevaPrevia(previa.semilla, m.id); mostrarInicio(); }; $('#chips').appendChild(b); }
 $('#ayuda').innerHTML = TACTIL
-  ? 'Dedo izquierdo en la pantalla: caminar (llévalo hasta el borde para correr).<br>Dedo derecho: mirar alrededor.<br>Toca el minimapa para ver el mapa grande.'
-  : 'W A S D: caminar · Mayúscula: correr · Ratón: mirar<br>M: mapa grande · Esc: pausa';
+  ? 'Dedo izquierdo: caminar (hasta el borde para correr) · Dedo derecho: mirar.<br>Botón naranja: disparar · «Usar»: entrar y hablar · toca una vacuna para usarla · toca el minimapa para ver el mapa grande.'
+  : 'W A S D: caminar · Mayúscula: correr · Ratón: mirar · Clic: disparar · R: recargar<br>E: entrar o usar · V: vacuna · Q: Ojo muerto · 1 y 2: armas · M: mapa · Esc: pausa';
 
 // ---------- ciclo del juego ----------
 let antes = performance.now(), cuentaMini = 0;
@@ -608,20 +736,16 @@ function cuadro(ahora) {
     if (teclas.KeyW || teclas.ArrowUp) fz -= 1; if (teclas.KeyS || teclas.ArrowDown) fz += 1;
     if (teclas.KeyA || teclas.ArrowLeft) fx -= 1; if (teclas.KeyD || teclas.ArrowRight) fx += 1;
     if (palanca.id !== null) { fx = palanca.x; fz = palanca.y; corre = Math.hypot(fx, fz) > 0.92; }
-    const largo = Math.hypot(fx, fz);
+    const largo = Math.hypot(fx, fz), ritmo = window.JUEGO ? JUEGO.velocidad(corre, largo > 0.05) : (corre ? D.jugador.correr : 1);
     if (largo > 0.05) {
       if (largo > 1) { fx /= largo; fz /= largo; }
-      const v = D.jugador.velocidad * (corre ? D.jugador.correr : 1) * dt, s = Math.sin(J.giro), c = Math.cos(J.giro);
+      const v = D.jugador.velocidad * ritmo * dt, s = Math.sin(J.giro), c = Math.cos(J.giro);
       moverCon((fx * c + fz * s) * v, (-fx * s + fz * c) * v);
     }
     // edificios a la vista y puerta cercana
-    for (const l of ciudad.lotes) if (!l.visto && Math.max(Math.abs(J.x - l.cx) - l.ancho / 2, Math.abs(J.z - l.cz) - l.fondo / 2, 0) < D.jugador.verDesde) l.visto = true;
-    let cerca = null, dmin = D.jugador.puertaCerca;
-    for (const p of puertas) { const d = Math.hypot(J.x - p.x, J.z - p.z); if (d < dmin) { dmin = d; cerca = p; } }
-    const aviso = $('#aviso');
-    if (cerca) { aviso.style.display = 'block'; aviso.innerHTML = `${cerca.lote.ed.nombre}<small>${D.categorias[cerca.lote.ed.cat].nombre} · pronto podrás entrar</small>`; }
-    else aviso.style.display = 'none';
+    if (!bajoTecho) for (const l of ciudad.lotes) if (!l.visto && Math.max(Math.abs(J.x - l.cx) - l.ancho / 2, Math.abs(J.z - l.cz) - l.fondo / 2, 0) < D.jugador.verDesde) l.visto = true;
   }
+  if (window.JUEGO) JUEGO.actualizar(dt);
   if (estado === 'jugar') pasarTiempo(dt);
   camara.position.set(J.x, D.jugador.alto, J.z); camara.rotation.set(J.cabeceo, J.giro, CLIMA[amb.clima].id === 'calor' ? Math.sin(amb.t * 1.7) * 0.004 * amb.mezcla : 0);
   pintarAmbiente(dt);
@@ -639,5 +763,6 @@ mostrarInicio();
 requestAnimationFrame(cuadro);
 window.__pc = { get ciudad() { return ciudad; }, get estado() { return estado; }, J, amb, efectos, CLIMA, pasarTiempo, avisar, generarCiudad, continuar, nuevaPartida, guardar, leerGuardada, abrirMapa };
 </script>
+<script src="juego.js"></script>
 </body>
 </html>

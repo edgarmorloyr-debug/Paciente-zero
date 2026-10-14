@@ -1,0 +1,24 @@
+Sonidos de Seis Balas
+=====================
+
+Todos los sonidos de esta carpeta son de dominio público (licencia CC0 1.0:
+https://creativecommons.org/publicdomain/zero/1.0/). Se recortaron y se pasaron a MP3.
+
+- Kenney (www.kenney.nl): paquetes «Impact Sounds», «RPG Audio», «Casino Audio»,
+  «Interface Sounds» y «Music Jingles».
+  Pasos, caídas, metal, monedas, fichas, cartas, dados, puertas,
+  avisos y melodías cortas (fall*, clang*, step_*, coins*, chips, card*,
+  cards_shuffle, dice, door_*, metalClick, metalLatch, confirm, error, jingle_*).
+- Kenney, «Impact Sounds» e «Interface Sounds» (CC0): meter balas y girar el tambor
+  (clink*, tick*).
+- OpenGameArt.org (CC0), recarga del revólver (rl_*): «Gun Reload Sound Effects» (bmaczero),
+  «Handgun Reload Sound Effect» (zer0sol), «Equipment Clicks II» y «equipment clicks III» (lfa).
+- OpenGameArt.org, «Enemy sounds» (CC0): gruñidos fuertes (zom_enemy*).
+- OpenGameArt.org, «Hungry Ghoul» (CC0): gruñidos de zombi (zom_ghoul*).
+- «The Free Firearm Sound Library» (CC0): disparos de los revólveres (shot_*).
+  En calidad de estudio, elegidos por el dueño: shot_sheriff (Marlin 336),
+  shot_johnny (Smith & Wesson 642), shot_velorio (Ruger Single Six),
+  shot_francois (Mosin Nagant) y shot_lilith (PPSh). Los *_2 son la segunda toma
+  de la misma grabación.
+
+Gracias a sus autores.

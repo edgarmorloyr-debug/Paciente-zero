@@ -169,5 +169,121 @@ window.DATOS = {
     lunaRoja: { nombre: 'Luna roja', prob: 0.05, efectos: { zombiDano: 1.25, infeccionGolpe: 1.5, premios: 2 },
       texto: 'Zombis pegan un 25 % más · los golpes infectan un 50 % más · todos los premios ×2',
       aviso: 'Sale la Luna roja: premios dobles, zombis furiosos', color: 0x6a1010, mezcla: 0.5 }
+  },
+
+  // ---------- jugabilidad (DISENO.md, secciones 2, 5, 6, 7 y 8) ----------
+  juego: {
+    niveles: 3,
+    // personajes de Seis Balas con su arma y su ventaja en Paciente Cero
+    personajes: {
+      sheriff: { nombre: 'El Sheriff', arma: 'paci', ventaja: 'Justiciero: +10 % de daño y empieza con 12 balas más', dano: 1.1, balasExtra: 12 },
+      johnny: { nombre: 'Johnny R.', arma: 'corto', ventaja: 'Gambler: +25 % de suerte en minijuegos y cajas', suerte: 1.25 },
+      armando: { nombre: 'Don Velorio', arma: 'viejo', ventaja: 'Viejo zorro: una vez por partida se levanta con 30 % de vida', revivir: 0.3 },
+      lilith: { nombre: 'Lilith', arma: 'uzi', ventaja: 'Hija de la noche: +30 % de estamina y ve mejor de noche', estamina: 1.3, vistaNoche: 1.3 },
+      carlos: { nombre: 'Geronimo', arma: 'cowboy', ventaja: 'Dos revólveres de acero .44: dispara con los dos', dosManos: true },
+      francois: { nombre: 'Françoise', arma: 'magnum', ventaja: 'Precavida: la infección le sube un 20 % más lento y recibe 12 balas al empezar cada nivel', infeccionSola: 0.8, balasNivel: 12 }
+    },
+
+    jugador: {
+      vida: 100, estamina: 100,
+      gastoCorrer: 16, recuperaEstamina: 20, // por segundo
+      balasIniciales: 36, dineroInicial: 40,
+      recargaBase: 1.5, // segundos de recarga con una recarga de 1
+      bolsillo: 3, vacunasActivas: 2,
+      habilidad: { nombre: 'Ojo muerto', muertesParaCargar: 18, dura: 5, lentitud: 0.35 }
+    },
+
+    infeccion: {
+      golpe: 3, golpeFuerte: 6, escupitajo: 4,
+      subeSola: 1, cadaSegundos: 20, // +1 % cada 20 s, si ya tienes algo de infección
+      etapas: [
+        { desde: 25, texto: 'La vista se pone verdosa' },
+        { desde: 50, texto: 'La estamina se gasta más rápido', estaminaGasto: 1.3 },
+        { desde: 75, texto: 'La vista tiembla y los zombis te notan de más lejos', deteccion: 1.3 }
+      ]
+    },
+
+    // vacunas: baja = cuánto baja la infección; dura: 'nivel', 'partida' o segundos
+    vacunas: {
+      basica: { nombre: 'Vacuna básica', baja: 20, precio: 40, color: '#e8e8e8', texto: 'Baja la infección 20 %' },
+      roja: { nombre: 'Vacuna roja', baja: 15, precio: 90, color: '#ff5a5a', dura: 'nivel', efecto: { vidaMax: 25 }, texto: '−15 % infección · +25 de vida máxima en este nivel' },
+      azul: { nombre: 'Vacuna azul', baja: 15, precio: 90, color: '#5aa8ff', dura: 'nivel', efecto: { estaminaMax: 1.3, velocidad: 1.1 }, texto: '−15 % infección · +30 % estamina y corres más en este nivel' },
+      amarilla: { nombre: 'Vacuna amarilla', baja: 15, precio: 90, color: '#ffd84a', dura: 'nivel', efecto: { recarga: 1.25 }, texto: '−15 % infección · recargas un 25 % más rápido en este nivel' },
+      verde: { nombre: 'Vacuna verde', baja: 10, precio: 120, color: '#6ae06a', dura: 120, efecto: { inmune: 1 }, texto: '−10 % infección · 2 minutos sin infectarte' },
+      negra: { nombre: 'Vacuna negra', baja: 40, precio: 70, color: '#3a3a3a', dura: 'nivel', efecto: { vidaMax: -15 }, texto: '−40 % infección · −15 de vida máxima en este nivel' },
+      experimental: { nombre: 'Vacuna experimental', baja: 30, precio: 60, color: '#c070ff', dura: 'nivel', azar: true, texto: '−30 % infección · un efecto al azar, bueno o malo' },
+      suero: { nombre: 'Suero del Paciente Cero', baja: 100, precio: 0, color: '#ff3a3a', dura: 'partida', efecto: { dano: 1.1 }, texto: 'Te cura toda la infección · +10 % de daño toda la partida' }
+    },
+    experimentales: [
+      { texto: 'Te sientes fuerte: +15 % de daño', efecto: { dano: 1.15 } },
+      { texto: 'Piernas ligeras: corres un 15 % más', efecto: { velocidad: 1.15 } },
+      { texto: 'Mareo: −20 % de estamina', efecto: { estaminaMax: 0.8 } },
+      { texto: 'Fiebre: la infección sube sola un 30 % más rápido', efecto: { infeccionSola: 1.3 } }
+    ],
+
+    // tiendas: qué vende cada una
+    tiendas: {
+      armeria: { titulo: 'Armería', ofertas: 4, precioArma: { paci: 120, corto: 120, viejo: 140, cowboy: 140, magnum: 260, uzi: 280, mp5: 300, ballesta: 320, jackpot: 220, minigun: 380, tesla: 400, bazuca: 400 } },
+      farmacia: { titulo: 'Farmacia', vacunas: ['basica', 'roja', 'azul', 'amarilla'], botiquin: { precio: 30, cura: 40 } },
+      delivery: { titulo: 'Apocalipsis Delivery', paquetes: [{ balas: 12, precio: 25 }, { balas: 36, precio: 65 }, { balas: 72, precio: 120 }] },
+      ferreteria: { titulo: 'Ferretería', mejoras: { dano: { nombre: 'Cañón reforzado', texto: '+15 % de daño', precio: 70, valor: 1.15 }, recarga: { nombre: 'Cargador rápido', texto: 'Recarga 25 % más rápida', precio: 60, valor: 1.25 }, mira: { nombre: 'Mira', texto: 'Disparos un 40 % más precisos', precio: 60, valor: 0.6 } } },
+      mercado: { titulo: 'Mercado negro', vacunas: ['verde', 'negra', 'experimental'], recargo: 1.2 },
+      herrero: { titulo: 'Taller del herrero', nivelMax: 5, precioNivel: 90, danoNivel: 0.12 }
+    },
+
+    dinero: { zombi: [2, 5], minijefe: 60, jefe: 120, cajon: [5, 40] },
+
+    // zombis
+    zombis: {
+      enCalle: { 1: 7, 2: 10, 3: 13 },          // cuántos andan por la calle a la vez
+      porPeligro: 2,                             // zombis dentro de un edificio = peligro x esto (± 1)
+      tiposCalle: { 1: ['walker', 'walker', 'walker', 'crawler', 'dog'], 2: ['walker', 'walker', 'runner', 'crawler', 'dog', 'spitter', 'copz'], 3: ['walker', 'runner', 'runner', 'spitter', 'copz', 'armored', 'bloater', 'dog'] },
+      tiposDentro: { 1: ['walker', 'walker', 'crawler', 'runner'], 2: ['walker', 'runner', 'crawler', 'spitter', 'copz'], 3: ['walker', 'runner', 'spitter', 'armored', 'bloater', 'screamer'] },
+      vidaPorNivel: [1, 1.25, 1.55], danoPorNivel: [1, 1.15, 1.3],
+      notan: 16,        // metros desde los que te notan
+      ruidoDisparo: 34, // metros a los que llega el ruido de un disparo
+      fuertes: ['brute', 'bloater', 'saw', 'abom', 'boss', 'armored'],
+      soltarBalas: 0.18, soltarDinero: 0.5,
+      reaparecer: [6, 12]  // segundos entre zombis nuevos en la calle
+    },
+
+    // minijefes y jefes de habitación
+    minijefes: {
+      comisaria: { nombre: 'El Guardia de Seguridad', tipo: 'armored', escala: 1.5, vida: 900, dano: 22, velocidad: 1.8, escolta: ['copz', 'copz'] },
+      bomberos: { nombre: 'El Pirómano', tipo: 'brute', look: 'Bombero', escala: 1.3, vida: 1000, dano: 24, velocidad: 1.5, escupe: true },
+      gimnasio: { nombre: 'El Forzudo', tipo: 'brute', escala: 1.45, vida: 1100, dano: 28, velocidad: 1.7, embiste: true }
+    },
+    jefes: {
+      laboratorio: { nombre: 'La Abominación', tipo: 'abom', escala: 1, vida: 2200, dano: 34, velocidad: 1.3 },
+      hospital: { nombre: 'El Jefe de Planta', tipo: 'boss', look: 'Cirujano', escala: 1, vida: 2400, dano: 32, velocidad: 1.4 }
+    },
+
+    // los tres Pacientes Cero (DISENO.md, sección 5)
+    pacientes: [
+      { nombre: 'La Enfermera', tipo: 'walker', look: 'Enfermera', escala: 1.35, vida: 2600, dano: 18, velocidad: 3.2, jeringas: true, llama: 4,
+        poder: { id: 'sangre', nombre: 'Sangre fuerte', texto: 'Tu infección sube un 25 % más lento', efecto: { infeccionSola: 0.75 } } },
+      { nombre: 'El Mensajero', tipo: 'runner', look: 'Motociclista', escala: 1.3, vida: 3600, dano: 22, velocidad: 4.6, bombas: true, llama: 5,
+        poder: { id: 'olfato', nombre: 'Olfato', texto: 'Los edificios con objetos brillan en el minimapa', efecto: { olfato: 1 } } },
+      { nombre: 'El Primero', tipo: 'boss', escala: 1.25, vida: 6000, dano: 30, velocidad: 2.2, fases: 3, jeringas: true, llama: 6,
+        poder: { id: 'victoria', nombre: 'Cura', texto: 'Ganaste la partida', efecto: {} } }
+    ],
+    pistas: { necesarias: 3, guaridaAbreEn: 600 }, // la guarida se abre sola a los 10 minutos del nivel
+
+    // sorpresas en edificios comunes (DISENO.md, 4.7)
+    sorpresas: { sobreviviente: 0.05, radio: 0.08, trampa: 0.06, dormido: 0.1, alijo: 0.04 },
+
+    // edificios raros: cajas que se abren a balazos (disparos para abrir)
+    cajas: { almacen: [3, 6, 12], contenedor: [18], boveda: [4, 8, 12] },
+
+    // minijuegos
+    minijuegos: {
+      casino: { apuestas: [10, 25, 50], simbolos: ['Calavera', 'Bala', 'Vacuna', 'Moneda', 'Cerebro'], pagos: { tres: 8, dos: 1.5 } },
+      tresenraya: { premio: 60, horda: 6 },
+      galeria: { costo: 15, segundos: 20, blancos: 14, premioPorBlanco: 6 },
+      zafira: { costo: 20 },
+      bolera: { costo: 15, pinos: 8, premioPorPino: 8 },
+      garra: { costo: 10, prob: 0.35 },
+      arena: { segundos: 60, premio: 150 }
+    }
   }
 };
