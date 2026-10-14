@@ -159,10 +159,11 @@ function generarCiudad(semilla, mapaId, nivel) {
   for (let y = 0; y < M.h; y++) for (let x = 0; x < M.w; x++) if (ocupado[y * M.w + x] < 0) rellenos.push({ x, y, tipo: elegir(R, D.rellenos) });
   // medidas en metros y lado de la puerta
   for (const l of lotes) {
+    if (!l.ed) continue;
     l.x0 = D.calle + l.x * PASO; l.z0 = D.calle + l.y * PASO;
     l.ancho = l.w * D.lote + (l.w - 1) * D.calle; l.fondo = l.h * D.lote + (l.h - 1) * D.calle;
     l.cx = l.x0 + l.ancho / 2; l.cz = l.z0 + l.fondo / 2;
-    const [a0, a1] = D.alturas[l.tam]; l.alto = a0 + R() * (a1 - a0);
+    const [p0, p1] = l.ed.pisos; l.pisos = p0 + Math.floor(R() * (p1 - p0 + 1)); l.alto = l.pisos * D.altoPiso + D.pretil;
     l.puerta = Math.floor(R() * 4); l.visto = false;
   }
   // un lote grande sin edificio se llena con rellenos, lote por lote
@@ -263,13 +264,13 @@ function edificio(l, M, noche) {
   }
   if (e.id === 'zafira') {
     const r = Math.min(bw, bd) / 2;
-    const carpa = new THREE.Mesh(new THREE.ConeGeometry(r, alto, 8), mat(0x6a2a7a)); carpa.position.set(l.cx, alto / 2 + 0.16, l.cz); g.add(carpa);
+    const ac = alto * 1.6; const carpa = new THREE.Mesh(new THREE.ConeGeometry(r, ac, 8), mat(0x6a2a7a)); carpa.position.set(l.cx, ac / 2 + 0.16, l.cz); g.add(carpa);
     const franja = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.98, r, 1.6, 8), mat(0xe0b040)); franja.position.set(l.cx, 0.96, l.cz); g.add(franja);
   } else if (e.id === 'estacionamiento') {
-    for (let p = 0; p < 3; p++) caja(g, l.cx, 0.31 + p * 3.2, l.cz, bw, 0.3, bd, mat(0x6a6c6e));
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) caja(g, l.cx + sx * (bw / 2 - 0.5), 3.3, l.cz + sz * (bd / 2 - 0.5), 0.8, 6.6, 0.8, mat(0x5a5c5e));
+    for (let p = 0; p <= l.pisos; p++) caja(g, l.cx, 0.31 + p * D.altoPiso, l.cz, bw, 0.3, bd, mat(0x6a6c6e));
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) caja(g, l.cx + sx * (bw / 2 - 0.5), l.pisos * D.altoPiso / 2 + 0.3, l.cz + sz * (bd / 2 - 0.5), 0.8, l.pisos * D.altoPiso, 0.8, mat(0x5a5c5e));
   } else {
-    const cuerpo = new THREE.Mesh(geoCaja, new THREE.MeshLambertMaterial({ map: ventanas(e.cat, noche, Math.max(1, Math.round(Math.max(bw, bd) / 3.5)) / 2, Math.max(1, Math.round(alto / 3.2)) / 2) }));
+    const cuerpo = new THREE.Mesh(geoCaja, new THREE.MeshLambertMaterial({ map: ventanas(e.cat, noche, Math.max(1, Math.round(Math.max(bw, bd) / 3.5)) / 2, l.pisos / 2) }));
     cuerpo.material.userData.propio = true; cuerpo.position.set(l.cx, alto / 2 + 0.16, l.cz); cuerpo.scale.set(bw, alto, bd); g.add(cuerpo);
     caja(g, l.cx, alto + 0.36, l.cz, bw + 0.6, 0.4, bd + 0.6, mat(cat.techo));
     if (e.id === 'iglesia') {
@@ -282,12 +283,12 @@ function edificio(l, M, noche) {
   solidos.push(rect(l.cx, l.cz, bw, bd));
   // puerta, marco y letrero en el lado elegido
   const fx = l.cx + dx * (bw / 2 + 0.03), fz = l.cz + dz * (bd / 2 + 0.03);
-  const marco = new THREE.Mesh(geoPlano, mat(e.cat === 'tienda' ? 0xffb347 : 0x5a5248)); marco.position.set(fx + dx * 0.01, 1.7, fz + dz * 0.01); marco.rotation.y = giro; marco.scale.set(2.9, 3.3, 1); g.add(marco);
-  const puerta = new THREE.Mesh(geoPlano, mat(0x14100c)); puerta.position.set(fx + dx * 0.03, 1.6, fz + dz * 0.03); puerta.rotation.y = giro; puerta.scale.set(2.4, 3, 1); g.add(puerta);
-  if (e.cat === 'tienda') { const toldo = caja(g, fx + dx * 0.9, 3.6, fz + dz * 0.9, dx ? 1.8 : 4.2, 0.2, dx ? 4.2 : 1.8, mat(0xc0502a)); toldo.rotation.set(dz * 0.18, 0, -dx * 0.18); }
+  const marco = new THREE.Mesh(geoPlano, mat(e.cat === 'tienda' ? 0xffb347 : 0x5a5248)); marco.position.set(fx + dx * 0.01, 1.43, fz + dz * 0.01); marco.rotation.y = giro; marco.scale.set(2.6, 2.7, 1); g.add(marco);
+  const puerta = new THREE.Mesh(geoPlano, mat(0x14100c)); puerta.position.set(fx + dx * 0.03, 1.33, fz + dz * 0.03); puerta.rotation.y = giro; puerta.scale.set(2.1, 2.5, 1); g.add(puerta);
+  if (e.cat === 'tienda') { const toldo = caja(g, fx + dx * 0.9, 2.95, fz + dz * 0.9, dx ? 1.8 : 4.2, 0.2, dx ? 4.2 : 1.8, mat(0xc0502a)); toldo.rotation.set(dz * 0.18, 0, -dx * 0.18); }
   puertas.push({ x: fx + dx * 1.4, z: fz + dz * 1.4, lote: l });
   // el letrero va justo encima de la puerta, aunque el edificio sea bajo
-  const anchoCartel = Math.min(frente * 0.8, 9), altoCartel = 3.5 + anchoCartel / 8;
+  const anchoCartel = Math.min(frente * 0.8, 7), altoCartel = 3 + anchoCartel / 8;
   cartel(g, e, cat, fx + dx * 0.06, altoCartel, fz + dz * 0.06, giro, anchoCartel);
 }
 function cartel(g, e, cat, x, y, z, giro, ancho) {

@@ -95,6 +95,21 @@ En cada mapa la semilla elige qué edificio va en cada lote, con estas reglas:
 - **Mapa grande** al tocar el minimapa. Marca dónde estás, los edificios ya vistos y las pistas encontradas.
 - Los edificios ya vaciados quedan marcados con una ✓ en el mapa (en el juego se dibuja como icono, sin emojis).
 
+### 3.6 Altura estándar de los edificios (14-10-2026)
+
+- **Cada piso mide 3,2 m**, y el techo tiene un borde de 0,4 m. Un edificio de 1 planta mide 3,6 m; uno de 2 plantas, 6,8 m; y así sucesivamente.
+- Cada edificio tiene su número de plantas. Algunos varían un poco (por ejemplo, una casa abandonada puede tener 1 o 2), y la semilla decide cuántas le tocan.
+- Los números viven en `datos.js` (`altoPiso` y `pisos` de cada edificio).
+
+| Plantas | Altura | Cuántos | Edificios (lote) |
+|---|---|---|---|
+| 1 planta | 3,6 m | 25 | Garaje (A), Kiosco (A), Lavandería (A), Baños públicos (A), Parada de autobús (A), Cafetería (A), Restaurante (B), Supermercado saqueado (C), Iglesia (C), Armería (B), Farmacia (A), Apocalipsis Delivery (A), Ferretería (B), Mercado negro (A), Taller del herrero (B), Casa del cazador (A), Búnker (B), Tres en raya zombi (B), Galería de tiro (B), Carpa de Madame Zafira (A), Bolera zombi (B), Máquina de la garra (A), Almacén sellado (B), Contenedor militar (A), Gimnasio (B) |
+| 1 o 2 plantas | hasta 6,8 m | 1 | Casa abandonada (A) |
+| 2 plantas | 6,8 m | 10 | Escuela (B), Estacionamiento (C), Casa del médico (A), Mansión (C), Casa del coleccionista (B), Zombie Casino (C), Arena de pelea (C), Bóveda del banco (C), Comisaría (C), Estación de bomberos (C) |
+| 2 o 3 plantas | hasta 10,0 m | 1 | Oficina (B) |
+| 3 plantas | 10,0 m | 2 | Edificio de apartamentos (B), Laboratorio (D) |
+| 4 plantas | 13,2 m | 1 | Hospital (D) |
+
 ---
 
 ## 4. Los 40 edificios

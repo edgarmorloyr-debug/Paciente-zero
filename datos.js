@@ -10,8 +10,9 @@ window.DATOS = {
   // cuántos lotes ocupa cada tamaño (ancho x fondo)
   tamanos: { A: [1, 1], B: [2, 1], C: [2, 2], D: [3, 3] },
 
-  // altura de los edificios por tamaño [mínima, máxima]
-  alturas: { A: [4, 5], B: [4.5, 6.5], C: [6, 8.5], D: [8.5, 12] },
+  // altura estándar: cada piso mide lo mismo; cada edificio dice cuántos pisos tiene [mínimo, máximo]
+  altoPiso: 3.2,
+  pretil: 0.4, // borde del techo
 
   // los 6 tipos de mapa: cuadrícula ancho x fondo y cuántos lotes de cada tamaño
   mapas: [
@@ -48,51 +49,51 @@ window.DATOS = {
 
   // los 40 edificios (DISENO.md, sección 4). frec: comun | normal | raro | siempre
   edificios: [
-    { id: 'casa', n: 1, nombre: 'Casa abandonada', cat: 'comun', lote: 'A', frec: 'comun', peligro: 1 },
-    { id: 'garaje', n: 2, nombre: 'Garaje', cat: 'comun', lote: 'A', frec: 'comun', peligro: 2 },
-    { id: 'kiosco', n: 3, nombre: 'Kiosco', cat: 'comun', lote: 'A', frec: 'comun', peligro: 1 },
-    { id: 'lavanderia', n: 4, nombre: 'Lavandería', cat: 'comun', lote: 'A', frec: 'comun', peligro: 2 },
-    { id: 'banos', n: 5, nombre: 'Baños públicos', cat: 'comun', lote: 'A', frec: 'normal', peligro: 2 },
-    { id: 'parada', n: 6, nombre: 'Parada de autobús', cat: 'comun', lote: 'A', frec: 'comun', peligro: 1 },
-    { id: 'cafeteria', n: 7, nombre: 'Cafetería', cat: 'comun', lote: 'A', frec: 'comun', peligro: 1 },
-    { id: 'oficina', n: 8, nombre: 'Oficina', cat: 'comun', lote: 'B', frec: 'comun', peligro: 2 },
-    { id: 'escuela', n: 9, nombre: 'Escuela', cat: 'comun', lote: 'B', frec: 'normal', peligro: 3 },
-    { id: 'apartamentos', n: 10, nombre: 'Edificio de apartamentos', cat: 'comun', lote: 'B', frec: 'comun', peligro: 3 },
-    { id: 'restaurante', n: 11, nombre: 'Restaurante', cat: 'comun', lote: 'B', frec: 'normal', peligro: 2 },
-    { id: 'super', n: 12, nombre: 'Supermercado saqueado', cat: 'comun', lote: 'C', frec: 'normal', peligro: 3 },
-    { id: 'iglesia', n: 13, nombre: 'Iglesia', cat: 'comun', lote: 'C', frec: 'normal', peligro: 2 },
-    { id: 'estacionamiento', n: 14, nombre: 'Estacionamiento', cat: 'comun', lote: 'C', frec: 'normal', peligro: 3 },
+    { id: 'casa', n: 1, nombre: 'Casa abandonada', cat: 'comun', lote: 'A', frec: 'comun', pisos: [1, 2], peligro: 1 },
+    { id: 'garaje', n: 2, nombre: 'Garaje', cat: 'comun', lote: 'A', frec: 'comun', pisos: [1, 1], peligro: 2 },
+    { id: 'kiosco', n: 3, nombre: 'Kiosco', cat: 'comun', lote: 'A', frec: 'comun', pisos: [1, 1], peligro: 1 },
+    { id: 'lavanderia', n: 4, nombre: 'Lavandería', cat: 'comun', lote: 'A', frec: 'comun', pisos: [1, 1], peligro: 2 },
+    { id: 'banos', n: 5, nombre: 'Baños públicos', cat: 'comun', lote: 'A', frec: 'normal', pisos: [1, 1], peligro: 2 },
+    { id: 'parada', n: 6, nombre: 'Parada de autobús', cat: 'comun', lote: 'A', frec: 'comun', pisos: [1, 1], peligro: 1 },
+    { id: 'cafeteria', n: 7, nombre: 'Cafetería', cat: 'comun', lote: 'A', frec: 'comun', pisos: [1, 1], peligro: 1 },
+    { id: 'oficina', n: 8, nombre: 'Oficina', cat: 'comun', lote: 'B', frec: 'comun', pisos: [2, 3], peligro: 2 },
+    { id: 'escuela', n: 9, nombre: 'Escuela', cat: 'comun', lote: 'B', frec: 'normal', pisos: [2, 2], peligro: 3 },
+    { id: 'apartamentos', n: 10, nombre: 'Edificio de apartamentos', cat: 'comun', lote: 'B', frec: 'comun', pisos: [3, 3], peligro: 3 },
+    { id: 'restaurante', n: 11, nombre: 'Restaurante', cat: 'comun', lote: 'B', frec: 'normal', pisos: [1, 1], peligro: 2 },
+    { id: 'super', n: 12, nombre: 'Supermercado saqueado', cat: 'comun', lote: 'C', frec: 'normal', pisos: [1, 1], peligro: 3 },
+    { id: 'iglesia', n: 13, nombre: 'Iglesia', cat: 'comun', lote: 'C', frec: 'normal', pisos: [1, 1], peligro: 2 },
+    { id: 'estacionamiento', n: 14, nombre: 'Estacionamiento', cat: 'comun', lote: 'C', frec: 'normal', pisos: [2, 2], peligro: 3 },
 
-    { id: 'armeria', n: 15, nombre: 'Armería', cat: 'tienda', lote: 'B', frec: 'siempre', peligro: 0 },
-    { id: 'farmacia', n: 16, nombre: 'Farmacia', cat: 'tienda', lote: 'A', frec: 'siempre', peligro: 0 },
-    { id: 'delivery', n: 17, nombre: 'Apocalipsis Delivery', cat: 'tienda', lote: 'A', frec: 'siempre', peligro: 0 },
-    { id: 'ferreteria', n: 18, nombre: 'Ferretería', cat: 'tienda', lote: 'B', frec: 'comun', peligro: 0 },
-    { id: 'mercado', n: 19, nombre: 'Mercado negro', cat: 'tienda', lote: 'A', frec: 'raro', peligro: 1 },
-    { id: 'herrero', n: 20, nombre: 'Taller del herrero', cat: 'tienda', lote: 'B', frec: 'normal', peligro: 0 },
+    { id: 'armeria', n: 15, nombre: 'Armería', cat: 'tienda', lote: 'B', frec: 'siempre', pisos: [1, 1], peligro: 0 },
+    { id: 'farmacia', n: 16, nombre: 'Farmacia', cat: 'tienda', lote: 'A', frec: 'siempre', pisos: [1, 1], peligro: 0 },
+    { id: 'delivery', n: 17, nombre: 'Apocalipsis Delivery', cat: 'tienda', lote: 'A', frec: 'siempre', pisos: [1, 1], peligro: 0 },
+    { id: 'ferreteria', n: 18, nombre: 'Ferretería', cat: 'tienda', lote: 'B', frec: 'comun', pisos: [1, 1], peligro: 0 },
+    { id: 'mercado', n: 19, nombre: 'Mercado negro', cat: 'tienda', lote: 'A', frec: 'raro', pisos: [1, 1], peligro: 1 },
+    { id: 'herrero', n: 20, nombre: 'Taller del herrero', cat: 'tienda', lote: 'B', frec: 'normal', pisos: [1, 1], peligro: 0 },
 
-    { id: 'medico', n: 21, nombre: 'Casa del médico', cat: 'casa', lote: 'A', frec: 'normal', peligro: 2 },
-    { id: 'cazador', n: 22, nombre: 'Casa del cazador', cat: 'casa', lote: 'A', frec: 'normal', peligro: 2 },
-    { id: 'bunker', n: 23, nombre: 'Búnker', cat: 'casa', lote: 'B', frec: 'raro', peligro: 3 },
-    { id: 'mansion', n: 24, nombre: 'Mansión', cat: 'casa', lote: 'C', frec: 'raro', peligro: 4 },
-    { id: 'coleccionista', n: 25, nombre: 'Casa del coleccionista', cat: 'casa', lote: 'B', frec: 'raro', peligro: 2 },
+    { id: 'medico', n: 21, nombre: 'Casa del médico', cat: 'casa', lote: 'A', frec: 'normal', pisos: [2, 2], peligro: 2 },
+    { id: 'cazador', n: 22, nombre: 'Casa del cazador', cat: 'casa', lote: 'A', frec: 'normal', pisos: [1, 1], peligro: 2 },
+    { id: 'bunker', n: 23, nombre: 'Búnker', cat: 'casa', lote: 'B', frec: 'raro', pisos: [1, 1], peligro: 3 },
+    { id: 'mansion', n: 24, nombre: 'Mansión', cat: 'casa', lote: 'C', frec: 'raro', pisos: [2, 2], peligro: 4 },
+    { id: 'coleccionista', n: 25, nombre: 'Casa del coleccionista', cat: 'casa', lote: 'B', frec: 'raro', pisos: [2, 2], peligro: 2 },
 
-    { id: 'casino', n: 26, nombre: 'Zombie Casino', cat: 'minijuego', lote: 'C', frec: 'normal', peligro: 2 },
-    { id: 'tresenraya', n: 27, nombre: 'Tres en raya zombi', cat: 'minijuego', lote: 'B', frec: 'normal', peligro: 2 },
-    { id: 'galeria', n: 28, nombre: 'Galería de tiro', cat: 'minijuego', lote: 'B', frec: 'normal', peligro: 1 },
-    { id: 'zafira', n: 29, nombre: 'Carpa de Madame Zafira', cat: 'minijuego', lote: 'A', frec: 'normal', peligro: 1 },
-    { id: 'bolera', n: 30, nombre: 'Bolera zombi', cat: 'minijuego', lote: 'B', frec: 'raro', peligro: 2 },
-    { id: 'garra', n: 31, nombre: 'Máquina de la garra', cat: 'minijuego', lote: 'A', frec: 'comun', peligro: 1 },
-    { id: 'arena', n: 32, nombre: 'Arena de pelea', cat: 'minijuego', lote: 'C', frec: 'raro', peligro: 4 },
+    { id: 'casino', n: 26, nombre: 'Zombie Casino', cat: 'minijuego', lote: 'C', frec: 'normal', pisos: [2, 2], peligro: 2 },
+    { id: 'tresenraya', n: 27, nombre: 'Tres en raya zombi', cat: 'minijuego', lote: 'B', frec: 'normal', pisos: [1, 1], peligro: 2 },
+    { id: 'galeria', n: 28, nombre: 'Galería de tiro', cat: 'minijuego', lote: 'B', frec: 'normal', pisos: [1, 1], peligro: 1 },
+    { id: 'zafira', n: 29, nombre: 'Carpa de Madame Zafira', cat: 'minijuego', lote: 'A', frec: 'normal', pisos: [1, 1], peligro: 1 },
+    { id: 'bolera', n: 30, nombre: 'Bolera zombi', cat: 'minijuego', lote: 'B', frec: 'raro', pisos: [1, 1], peligro: 2 },
+    { id: 'garra', n: 31, nombre: 'Máquina de la garra', cat: 'minijuego', lote: 'A', frec: 'comun', pisos: [1, 1], peligro: 1 },
+    { id: 'arena', n: 32, nombre: 'Arena de pelea', cat: 'minijuego', lote: 'C', frec: 'raro', pisos: [2, 2], peligro: 4 },
 
-    { id: 'almacen', n: 33, nombre: 'Almacén sellado', cat: 'raro', lote: 'B', frec: 'normal', peligro: 2 },
-    { id: 'contenedor', n: 34, nombre: 'Contenedor militar', cat: 'raro', lote: 'A', frec: 'raro', peligro: 2 },
-    { id: 'boveda', n: 35, nombre: 'Bóveda del banco', cat: 'raro', lote: 'C', frec: 'raro', peligro: 3 },
+    { id: 'almacen', n: 33, nombre: 'Almacén sellado', cat: 'raro', lote: 'B', frec: 'normal', pisos: [1, 1], peligro: 2 },
+    { id: 'contenedor', n: 34, nombre: 'Contenedor militar', cat: 'raro', lote: 'A', frec: 'raro', pisos: [1, 1], peligro: 2 },
+    { id: 'boveda', n: 35, nombre: 'Bóveda del banco', cat: 'raro', lote: 'C', frec: 'raro', pisos: [2, 2], peligro: 3 },
 
-    { id: 'comisaria', n: 36, nombre: 'Comisaría', cat: 'minijefe', lote: 'C', frec: 'normal', peligro: 4 },
-    { id: 'bomberos', n: 37, nombre: 'Estación de bomberos', cat: 'minijefe', lote: 'C', frec: 'normal', peligro: 4 },
-    { id: 'gimnasio', n: 38, nombre: 'Gimnasio', cat: 'minijefe', lote: 'B', frec: 'normal', peligro: 4 },
-    { id: 'laboratorio', n: 39, nombre: 'Laboratorio', cat: 'jefe', lote: 'D', frec: 'normal', peligro: 5 },
-    { id: 'hospital', n: 40, nombre: 'Hospital', cat: 'jefe', lote: 'D', frec: 'normal', peligro: 5 }
+    { id: 'comisaria', n: 36, nombre: 'Comisaría', cat: 'minijefe', lote: 'C', frec: 'normal', pisos: [2, 2], peligro: 4 },
+    { id: 'bomberos', n: 37, nombre: 'Estación de bomberos', cat: 'minijefe', lote: 'C', frec: 'normal', pisos: [2, 2], peligro: 4 },
+    { id: 'gimnasio', n: 38, nombre: 'Gimnasio', cat: 'minijefe', lote: 'B', frec: 'normal', pisos: [1, 1], peligro: 4 },
+    { id: 'laboratorio', n: 39, nombre: 'Laboratorio', cat: 'jefe', lote: 'D', frec: 'normal', pisos: [3, 3], peligro: 5 },
+    { id: 'hospital', n: 40, nombre: 'Hospital', cat: 'jefe', lote: 'D', frec: 'normal', pisos: [4, 4], peligro: 5 }
   ],
 
   // reglas de reparto (DISENO.md, sección 3.4)
