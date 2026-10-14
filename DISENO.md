@@ -33,6 +33,8 @@ Recorres una ciudad que cambia en cada partida, entras a sus edificios a buscar 
 
 **Entre niveles:** una pantalla corta de resumen con los poderes conseguidos, las vacunas activas y el dinero. La partida se guarda sola aquí.
 
+**Partida guardada (pedido del dueño, 14-10-2026):** el menú de inicio siempre tiene **Nueva partida**. Si ya jugaste y saliste en cierto punto, la partida queda guardada sola (cada pocos segundos, al pausar y al cerrar la página) y aparece **Continuar**, que te devuelve al mismo lugar.
+
 ---
 
 ## 3. El mapa
@@ -61,12 +63,14 @@ Recorres una ciudad que cambia en cada partida, entras a sus edificios a buscar 
 
 | # | Mapa | Cuadrícula | Lotes A / B / C / D | Ambiente | Salida del nivel |
 |---|---|---|---|---|---|
-| 1 | **Pueblo** | 6 × 6 | 14 / 5 / 2 / 0 | Calles de tierra, casas bajas, atardecer | Camioneta |
-| 2 | **Barrio** | 7 × 7 | 16 / 7 / 3 / 1 | Casas con jardín, plaza central, noche | Autobús escolar |
-| 3 | **Centro** | 8 × 8 | 10 / 10 / 5 / 2 | Avenidas, edificios altos, lluvia | Entrada del metro |
-| 4 | **Zona industrial y puerto** | 8 × 7 | 6 / 6 / 6 / 2 | Contenedores, grúas, niebla | Lancha |
-| 5 | **Hospital y universidad** | 7 × 8 | 8 / 8 / 4 / 2 | Patios, pasarelas, noche fría | Helicóptero en la azotea |
+| 1 | **Pueblo** | 7 × 6 | 10 / 4 / 2 / 1 | Calles de tierra, casas bajas, atardecer | Camioneta |
+| 2 | **Barrio** | 7 × 7 | 14 / 6 / 3 / 1 | Casas con jardín, plaza central, noche | Autobús escolar |
+| 3 | **Centro** | 8 × 8 | 8 / 8 / 4 / 2 | Avenidas, edificios altos, lluvia | Entrada del metro |
+| 4 | **Zona industrial y puerto** | 8 × 7 | 4 / 5 / 5 / 2 | Contenedores, grúas, niebla | Lancha |
+| 5 | **Hospital y universidad** | 7 × 8 | 6 / 7 / 4 / 2 | Patios, pasarelas, noche fría | Helicóptero en la azotea |
 | 6 | **Feria abandonada** | 7 × 7 | 12 / 6 / 3 / 1 | Carpas, atracciones, luces de colores | Tren de la feria |
+
+**Ajuste del 14-10-2026:** algunas cantidades de lotes de la primera versión no cabían en su cuadrícula (por ejemplo, el Barrio pedía 51 lotes en un espacio de 49). Se ajustaron para que siempre quede algo de espacio libre para parques, carros y barricadas. El Pueblo pasó a 7 × 6 y ahora tiene 1 lote D, para que todos los mapas tengan su jefe de habitación. Las cifras viven en `datos.js`.
 
 **Qué mapa toca en cada nivel:**
 - Nivel 1: Pueblo o Barrio.

@@ -2,21 +2,514 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0d1110">
 <title>Paciente Cero</title>
 <style>
-  html, body { margin: 0; height: 100%; background: #0d1110; color: #e8efe9; font-family: system-ui, sans-serif; }
-  main { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; box-sizing: border-box; }
-  h1 { font-size: clamp(40px, 10vw, 88px); margin: 0; letter-spacing: 2px; color: #9be37a; text-shadow: 0 0 24px rgba(120, 220, 90, .35); }
-  p { font-size: 18px; max-width: 520px; line-height: 1.5; color: #c4d2c6; }
-  .tag { margin-top: 8px; font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: #8aa08d; }
+  :root { --verde: #9be37a; --naranja: #ff8a1f; --texto: #e8efe9; --suave: #b9c8bc; --panel: rgba(10, 14, 12, .82); --borde: rgba(155, 227, 122, .35); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0d1110; color: var(--texto); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
+  canvas#vista { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .capa { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(6, 9, 8, .78); z-index: 20; overflow-y: auto; }
+  .capa.ver { display: flex; }
+  .tarjeta { width: min(520px, 100%); max-height: 100%; overflow-y: auto; background: var(--panel); border: 1px solid var(--borde); border-radius: 16px; padding: 22px 20px; text-align: center; }
+  h1 { margin: 0; font-size: clamp(38px, 9vw, 64px); letter-spacing: 2px; color: var(--verde); text-shadow: 0 0 22px rgba(120, 220, 90, .35); }
+  h2 { margin: 0 0 10px; font-size: 24px; color: var(--verde); }
+  .sub { margin: 6px 0 16px; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: #8fa892; }
+  .ciudad { margin: 0 0 6px; font-size: 17px; line-height: 1.45; }
+  .ciudad b { color: var(--verde); }
+  .btn { display: block; width: 100%; min-height: 52px; margin: 10px 0 0; border-radius: 12px; font: 600 18px system-ui, sans-serif; cursor: pointer; border: 2px solid var(--borde); background: transparent; color: var(--texto); }
+  .btn.principal { background: var(--naranja); border-color: var(--naranja); color: #1a0d00; }
+  .btn[hidden] { display: none; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 8px; }
+  .chip { min-height: 48px; padding: 0 14px; border-radius: 24px; border: 1px solid var(--borde); background: transparent; color: var(--texto); font: 15px system-ui, sans-serif; cursor: pointer; }
+  .chip.activo { background: rgba(155, 227, 122, .18); border-color: var(--verde); color: var(--verde); }
+  .ayuda { margin-top: 16px; font-size: 14px; line-height: 1.5; color: var(--suave); text-align: left; }
+  .etiqueta { margin-top: 18px; font-size: 14px; color: var(--suave); }
+
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; display: none; }
+  #hud.ver { display: block; }
+  #info { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 12px; display: flex; gap: 8px; align-items: flex-start; }
+  #lugar { background: var(--panel); border: 1px solid var(--borde); border-radius: 10px; padding: 8px 12px; font-size: 14px; line-height: 1.35; }
+  #lugar b { color: var(--verde); font-size: 16px; }
+  #btn-pausa { pointer-events: auto; width: 48px; height: 48px; border-radius: 10px; border: 1px solid var(--borde); background: var(--panel); color: var(--texto); font: 700 18px system-ui; cursor: pointer; }
+  #mini { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 12px; width: 150px; height: 150px; border-radius: 50%; border: 2px solid rgba(155, 227, 122, .55); background: rgba(8, 12, 10, .75); pointer-events: auto; cursor: pointer; }
+  #aviso { position: absolute; left: 50%; bottom: 28%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--borde); border-radius: 12px; padding: 10px 16px; font-size: 16px; text-align: center; display: none; max-width: 90vw; }
+  #aviso small { display: block; font-size: 14px; color: var(--suave); margin-top: 2px; }
+  #mira { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: rgba(255, 255, 255, .7); }
+  #palanca { position: absolute; width: 120px; height: 120px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .3); background: rgba(255, 255, 255, .06); display: none; }
+  #palanca i { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: rgba(255, 255, 255, .35); }
+  #pista-tactil { position: absolute; left: 0; right: 0; bottom: max(16px, env(safe-area-inset-bottom)); text-align: center; font-size: 14px; color: rgba(255, 255, 255, .8); text-shadow: 0 1px 3px #000; display: none; padding: 0 16px; }
+  #mapa-grande canvas { max-width: 720px; max-height: 720px; min-width: 240px; min-height: 240px; border-radius: 14px; border: 1px solid var(--borde); background: #0a0e0c; }
+  #mapa-grande { flex-direction: column; gap: 10px; }
+  #mapa-info { min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 16px; padding: 4px 12px; background: var(--panel); border: 1px solid var(--borde); border-radius: 10px; width: min(92vw, 720px); }
+  #mapa-info small { display: block; font-size: 14px; color: var(--suave); }
+  #leyenda { display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; font-size: 14px; color: var(--suave); width: min(92vw, 720px); }
+  #leyenda span::before { content: ''; display: inline-block; width: 14px; height: 14px; margin-right: 6px; vertical-align: -2px; border-radius: 3px; background: var(--c); border: 2px solid var(--b); }
+  #mapa-grande canvas { width: min(92vw, calc(100vh - 220px)); height: min(92vw, calc(100vh - 220px)); }
+  #mapa-grande .cerrar { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 12px; width: auto; padding: 0 18px; background: var(--panel); }
+  @media (orientation: portrait) and (max-width: 600px) { #mini { width: 112px; height: 112px; } }
 </style>
 </head>
 <body>
-<main>
-  <h1>PACIENTE CERO</h1>
-  <div class="tag">Seis Balas C · en construcción</div>
-  <p>Una ciudad distinta en cada partida. Tres pacientes cero. Una infección que no espera.</p>
-</main>
+<canvas id="vista"></canvas>
+
+<div id="hud">
+  <div id="info"><button id="btn-pausa" aria-label="Pausa">II</button><div id="lugar"></div></div>
+  <canvas id="mini" width="300" height="300" aria-label="Minimapa: tócalo para ver el mapa grande"></canvas>
+  <div id="mira"></div>
+  <div id="aviso"></div>
+  <div id="palanca"><i></i></div>
+  <div id="pista-tactil">Dedo izquierdo: caminar (hasta el borde para correr) · Dedo derecho: mirar</div>
+</div>
+
+<div class="capa ver" id="inicio">
+  <div class="tarjeta">
+    <h1>PACIENTE CERO</h1>
+    <div class="sub">Seis Balas C · la ciudad</div>
+    <p class="ciudad" id="guardada-txt" hidden></p>
+    <button class="btn principal" id="btn-continuar" hidden>Continuar</button>
+    <p class="ciudad" id="ciudad-txt" style="margin-top:14px"></p>
+    <button class="btn" id="btn-nueva">Nueva partida</button>
+    <button class="btn" id="btn-otra">Otra ciudad</button>
+    <div class="etiqueta">Ver otro tipo de mapa:</div>
+    <div class="chips" id="chips"></div>
+    <div class="ayuda" id="ayuda"></div>
+  </div>
+</div>
+
+<div class="capa" id="pausa">
+  <div class="tarjeta">
+    <h2>Pausa</h2>
+    <p class="ciudad" id="pausa-txt"></p>
+    <button class="btn principal" id="btn-seguir">Seguir</button>
+    <button class="btn" id="btn-inicio">Guardar y volver al inicio</button>
+  </div>
+</div>
+
+<div class="capa" id="mapa-grande">
+  <canvas id="mapa-cv" width="900" height="900" aria-label="Mapa de la ciudad"></canvas>
+  <button class="btn cerrar" id="btn-cerrar-mapa">Cerrar mapa</button>
+  <div id="mapa-info">Toca un edificio para ver su nombre</div>
+  <div id="leyenda"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="datos.js"></script>
+<script>
+'use strict';
+const D = window.DATOS, $ = s => document.querySelector(s);
+const TACTIL = 'ontouchstart' in window || matchMedia('(pointer: coarse)').matches;
+const PASO = D.lote + D.calle;
+const EDIF = Object.fromEntries(D.edificios.map(e => [e.id, e]));
+const MAPA = Object.fromEntries(D.mapas.map(m => [m.id, m]));
+const CLAVE = 'pc_partida';
+
+// ---------- azar con semilla: la misma semilla arma siempre la misma ciudad ----------
+function azar(semilla) {
+  let a = semilla >>> 0;
+  return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+const elegir = (R, lista) => lista[Math.floor(R() * lista.length)];
+function barajar(R, lista) { const l = lista.slice(); for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [l[i], l[j]] = [l[j], l[i]]; } return l; }
+const semillaNueva = () => 10000 + Math.floor(Math.random() * 90000);
+const mapaDelNivel = (semilla, nivel) => elegir(azar(semilla * 7 + nivel), D.mapasPorNivel[nivel]);
+
+// ---------- generar la ciudad ----------
+function generarCiudad(semilla, mapaId, nivel) {
+  const R = azar(semilla), M = MAPA[mapaId], ocupado = new Array(M.w * M.h).fill(-1), lotes = [];
+  const cabe = (x, y, w, h) => {
+    if (x < 0 || y < 0 || x + w > M.w || y + h > M.h) return false;
+    for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) if (ocupado[j * M.w + i] >= 0) return false;
+    return true;
+  };
+  for (const tam of ['D', 'C', 'B', 'A']) for (let k = 0; k < M.lotes[tam]; k++) {
+    const [tw, th] = D.tamanos[tam], formas = tw === th ? [[tw, th]] : [[tw, th], [th, tw]], posibles = [];
+    for (const [w, h] of formas) for (let y = 0; y < M.h; y++) for (let x = 0; x < M.w; x++) if (cabe(x, y, w, h)) posibles.push({ x, y, w, h });
+    if (!posibles.length) continue;
+    const p = elegir(R, posibles), id = lotes.length;
+    for (let j = p.y; j < p.y + p.h; j++) for (let i = p.x; i < p.x + p.w; i++) ocupado[j * M.w + i] = id;
+    lotes.push({ tam, ...p });
+  }
+  // qué edificio va en cada lote
+  const usados = new Set(), libres = tam => lotes.filter(l => !l.ed && l.tam === tam);
+  const poner = (id, l) => { l.ed = EDIF[id]; usados.add(id); };
+  const tiendas = [];
+  for (const id of D.reglas.siempre) {
+    const c = libres(EDIF[id].lote); if (!c.length) continue;
+    // las tiendas quedan separadas entre sí: se elige el lote más lejos de las demás
+    let mejor = null, md = -1;
+    for (const l of barajar(R, c)) { const d = tiendas.length ? Math.min(...tiendas.map(t => Math.hypot(t.x - l.x, t.y - l.y))) : 99; if (d > md) { md = d; mejor = l; } }
+    poner(id, mejor); tiendas.push(mejor);
+  }
+  for (const l of libres('D')) { const op = barajar(R, D.edificios.filter(e => e.cat === 'jefe' && !usados.has(e.id))); if (op.length) poner(op[0].id, l); }
+  let mj = D.reglas.minijefesPorNivel[nivel] || 1;
+  for (const e of barajar(R, D.edificios.filter(e => e.cat === 'minijefe'))) { if (!mj) break; const c = libres(e.lote); if (c.length) { poner(e.id, elegir(R, c)); mj--; } }
+  for (const cat of D.reglas.alMenosUno) for (const e of barajar(R, D.edificios.filter(e => e.cat === cat))) { const c = libres(e.lote); if (c.length) { poner(e.id, elegir(R, c)); break; } }
+  for (const l of lotes) {
+    if (l.ed) continue;
+    const pool = D.edificios.filter(e => e.lote === l.tam && e.frec !== 'siempre' && e.cat !== 'jefe' && e.cat !== 'minijefe' && (e.frec === 'comun' || !usados.has(e.id)));
+    if (!pool.length) continue;
+    let t = R() * pool.reduce((s, e) => s + D.frecuencia[e.frec], 0);
+    const e = pool.find(e => (t -= D.frecuencia[e.frec]) < 0) || pool[pool.length - 1];
+    poner(e.id, l);
+  }
+  // lotes sin edificio
+  const rellenos = [];
+  for (let y = 0; y < M.h; y++) for (let x = 0; x < M.w; x++) if (ocupado[y * M.w + x] < 0) rellenos.push({ x, y, tipo: elegir(R, D.rellenos) });
+  // medidas en metros y lado de la puerta
+  for (const l of lotes) {
+    l.x0 = D.calle + l.x * PASO; l.z0 = D.calle + l.y * PASO;
+    l.ancho = l.w * D.lote + (l.w - 1) * D.calle; l.fondo = l.h * D.lote + (l.h - 1) * D.calle;
+    l.cx = l.x0 + l.ancho / 2; l.cz = l.z0 + l.fondo / 2;
+    const [a0, a1] = D.alturas[l.tam]; l.alto = a0 + R() * (a1 - a0);
+    l.puerta = Math.floor(R() * 4); l.visto = false;
+  }
+  // un lote grande sin edificio se llena con rellenos, lote por lote
+  for (const l of lotes) if (!l.ed) for (let j = l.y; j < l.y + l.h; j++) for (let i = l.x; i < l.x + l.w; i++) rellenos.push({ x: i, y: j, tipo: elegir(R, D.rellenos) });
+  return { semilla, mapa: M, nivel, lotes: lotes.filter(l => l.ed), rellenos, ancho: D.calle + M.w * PASO, fondo: D.calle + M.h * PASO };
+}
+
+// ---------- dibujo 3D ----------
+const lienzo = $('#vista');
+const render = new THREE.WebGLRenderer({ canvas: lienzo, antialias: !TACTIL, powerPreference: 'high-performance' });
+render.setPixelRatio(Math.min(devicePixelRatio || 1, TACTIL ? 1.25 : 1.75));
+const escena = new THREE.Scene(), camara = new THREE.PerspectiveCamera(72, 1, 0.1, 400);
+camara.rotation.order = 'YXZ';
+let mundo = null, ciudad = null, solidos = [], puertas = [];
+const geoCaja = new THREE.BoxGeometry(1, 1, 1), geoPlano = new THREE.PlaneGeometry(1, 1);
+const matCache = {};
+const mat = (color, extra = {}) => { const k = color + JSON.stringify(extra); return matCache[k] || (matCache[k] = new THREE.MeshLambertMaterial({ color, ...extra })); };
+function caja(padre, x, y, z, w, h, d, material) { const m = new THREE.Mesh(geoCaja, material); m.position.set(x, y, z); m.scale.set(w, h, d); padre.add(m); return m; }
+const hex = n => '#' + n.toString(16).padStart(6, '0');
+
+function lienzoTex(w, h, dibujar) { const c = document.createElement('canvas'); c.width = w; c.height = h; dibujar(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t; }
+const texVentanas = {};
+function ventanas(cat, noche, rx, ry) {
+  const k = cat + noche;
+  if (!texVentanas[k]) texVentanas[k] = lienzoTex(128, 128, (g, w, h) => {
+    g.fillStyle = hex(D.categorias[cat].pared); g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(0,0,0,.12)'; for (let y = 0; y < h; y += 8) g.fillRect(0, y, w, 1);
+    const R = azar(cat.length * 97 + (noche ? 5 : 0));
+    for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) {
+      const encendida = R() < (noche ? 0.45 : 0.15);
+      g.fillStyle = encendida ? (noche ? '#ffd27a' : '#cfe3ef') : '#1b2228';
+      g.fillRect(14 + x * 64, 16 + y * 64, 36, 40);
+      g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(14 + x * 64, 54 + y * 64, 36, 4);
+    }
+  });
+  const t = texVentanas[k].clone(); t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); return t;
+}
+function letrero(texto, color) {
+  return lienzoTex(512, 128, (g, w, h) => {
+    g.fillStyle = '#121614'; g.fillRect(0, 0, w, h); g.strokeStyle = color; g.lineWidth = 6; g.strokeRect(5, 5, w - 10, h - 10);
+    let fs = 60; do { g.font = `700 ${fs}px system-ui, sans-serif`; } while (g.measureText(texto).width > w - 40 && --fs > 18);
+    g.fillStyle = color; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(texto, w / 2, h / 2 + 2);
+  });
+}
+// lado de la puerta: 0 sur (+z), 1 norte (-z), 2 este (+x), 3 oeste (-x)
+const LADOS = [[0, 1, 0], [0, -1, Math.PI], [1, 0, Math.PI / 2], [-1, 0, -Math.PI / 2]];
+const rect = (cx, cz, w, d) => ({ x0: cx - w / 2, x1: cx + w / 2, z0: cz - d / 2, z1: cz + d / 2 });
+
+function construir(c) {
+  if (mundo) { escena.remove(mundo); mundo.traverse(o => { if (o.material && o.material.userData.propio) { o.material.map.dispose(); o.material.dispose(); } }); }
+  mundo = new THREE.Group(); escena.add(mundo); solidos = []; puertas = [];
+  const M = c.mapa, R = azar(c.semilla + 1), noche = M.luz < 0.65;
+  escena.background = new THREE.Color(M.cielo); escena.fog = new THREE.Fog(M.niebla, 18, M.nieblaLejos);
+  mundo.add(new THREE.HemisphereLight(M.sol, 0x202018, M.luz + 0.25));
+  const sol = new THREE.DirectionalLight(M.sol, M.luz * 0.8); sol.position.set(60, 100, 40); mundo.add(sol);
+  // suelo y calles
+  const suelo = new THREE.Mesh(geoPlano, mat(M.calle)); suelo.rotation.x = -Math.PI / 2; suelo.scale.set(c.ancho + 200, c.fondo + 200, 1); suelo.position.set(c.ancho / 2, 0, c.fondo / 2); mundo.add(suelo);
+  const linea = mat(noche ? 0x9a8a50 : 0xc8b870);
+  for (let i = 0; i <= M.w; i++) for (let j = 0; j < M.h; j++) caja(mundo, i * PASO + D.calle / 2, 0.02, D.calle + j * PASO + D.lote / 2, 0.18, 0.02, 3, linea);
+  for (let j = 0; j <= M.h; j++) for (let i = 0; i < M.w; i++) caja(mundo, D.calle + i * PASO + D.lote / 2, 0.02, j * PASO + D.calle / 2, 3, 0.02, 0.18, linea);
+  // postes de luz en los cruces
+  const cruces = (M.w + 1) * (M.h + 1), poste = new THREE.InstancedMesh(geoCaja, mat(0x2a2c2e), cruces), foco = new THREE.InstancedMesh(geoCaja, new THREE.MeshBasicMaterial({ color: noche ? 0xffe0a0 : 0xd8d8c8 }), cruces);
+  const mx = new THREE.Matrix4(), q0 = new THREE.Quaternion(); let n = 0;
+  for (let i = 0; i <= M.w; i++) for (let j = 0; j <= M.h; j++) {
+    const x = i * PASO + 0.6, z = j * PASO + 0.6;
+    poste.setMatrixAt(n, mx.compose(new THREE.Vector3(x, 2.6, z), q0, new THREE.Vector3(0.2, 5.2, 0.2)));
+    foco.setMatrixAt(n, mx.compose(new THREE.Vector3(x + 0.5, 5.2, z + 0.5), q0, new THREE.Vector3(0.7, 0.25, 0.7))); n++;
+  }
+  mundo.add(poste, foco);
+  // borde del mapa: barreras de concreto
+  const barrera = mat(0x8a8a82);
+  caja(mundo, c.ancho / 2, 0.6, -0.3, c.ancho, 1.2, 0.6, barrera); caja(mundo, c.ancho / 2, 0.6, c.fondo + 0.3, c.ancho, 1.2, 0.6, barrera);
+  caja(mundo, -0.3, 0.6, c.fondo / 2, 0.6, 1.2, c.fondo, barrera); caja(mundo, c.ancho + 0.3, 0.6, c.fondo / 2, 0.6, 1.2, c.fondo, barrera);
+  for (const l of c.lotes) edificio(l, M, noche);
+  for (const r of c.rellenos) relleno(r, M, R);
+}
+
+function edificio(l, M, noche) {
+  const e = l.ed, cat = D.categorias[e.cat], g = new THREE.Group(); mundo.add(g);
+  caja(g, l.cx, 0.08, l.cz, l.ancho, 0.16, l.fondo, mat(M.acera));
+  const m = 1.4, bw = l.ancho - m * 2, bd = l.fondo - m * 2, alto = l.alto;
+  const [dx, dz, giro] = LADOS[l.puerta], frente = dx ? bd : bw;
+  // formas especiales
+  if (e.id === 'parada') {
+    caja(g, l.cx, 2.6, l.cz, 7, 0.2, 3, mat(cat.techo)); caja(g, l.cx, 1.3, l.cz - 1.4, 7, 2.6, 0.12, mat(0x9fb8c8, { transparent: true, opacity: 0.45 }));
+    for (const s of [-1, 1]) caja(g, l.cx + s * 3.4, 1.3, l.cz, 0.15, 2.6, 3, mat(0x3a3e42));
+    caja(g, l.cx, 0.5, l.cz - 1, 5, 0.12, 0.6, mat(0x6a4a2a));
+    solidos.push({ x0: l.cx - 3.6, x1: l.cx + 3.6, z0: l.cz - 1.6, z1: l.cz - 1.2 });
+    puertas.push({ x: l.cx, z: l.cz + 1, lote: l }); cartel(g, e, cat, l.cx, 3.4, l.cz + 1.6, 0, 6);
+    return;
+  }
+  if (e.id === 'contenedor') {
+    caja(g, l.cx, 1.45, l.cz, bw * 0.8, 2.6, bd * 0.45, mat(0x4a5a3a));
+    for (let i = -4; i <= 4; i++) caja(g, l.cx + i * bw * 0.08, 1.45, l.cz + bd * 0.226, 0.12, 2.5, 0.05, mat(0x3a4a2c));
+    solidos.push(rect(l.cx, l.cz, bw * 0.8, bd * 0.45));
+    puertas.push({ x: l.cx, z: l.cz + bd * 0.25 + 1, lote: l }); cartel(g, e, cat, l.cx, 3.4, l.cz + bd * 0.24, 0, 6);
+    return;
+  }
+  if (e.id === 'zafira') {
+    const r = Math.min(bw, bd) / 2;
+    const carpa = new THREE.Mesh(new THREE.ConeGeometry(r, alto, 8), mat(0x6a2a7a)); carpa.position.set(l.cx, alto / 2 + 0.16, l.cz); g.add(carpa);
+    const franja = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.98, r, 1.6, 8), mat(0xe0b040)); franja.position.set(l.cx, 0.96, l.cz); g.add(franja);
+  } else if (e.id === 'estacionamiento') {
+    for (let p = 0; p < 4; p++) caja(g, l.cx, 0.31 + p * 3.2, l.cz, bw, 0.3, bd, mat(0x6a6c6e));
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) caja(g, l.cx + sx * (bw / 2 - 0.5), 4.8, l.cz + sz * (bd / 2 - 0.5), 0.8, 9.6, 0.8, mat(0x5a5c5e));
+  } else {
+    const cuerpo = new THREE.Mesh(geoCaja, new THREE.MeshLambertMaterial({ map: ventanas(e.cat, noche, Math.max(1, Math.round(Math.max(bw, bd) / 4.5)), Math.max(1, Math.round(alto / 3.6))) }));
+    cuerpo.material.userData.propio = true; cuerpo.position.set(l.cx, alto / 2 + 0.16, l.cz); cuerpo.scale.set(bw, alto, bd); g.add(cuerpo);
+    caja(g, l.cx, alto + 0.36, l.cz, bw + 0.6, 0.4, bd + 0.6, mat(cat.techo));
+    if (e.id === 'iglesia') {
+      caja(g, l.cx + bw * 0.3, alto + 4, l.cz - bd * 0.25, 4, 8, 4, mat(0x8e8778));
+      const punta = new THREE.Mesh(new THREE.ConeGeometry(3, 5, 4), mat(cat.techo)); punta.position.set(l.cx + bw * 0.3, alto + 10.5, l.cz - bd * 0.25); punta.rotation.y = Math.PI / 4; g.add(punta);
+    }
+    if (e.cat === 'minijuego') caja(g, l.cx, alto + 0.6, l.cz, bw + 0.7, 0.12, bd + 0.7, new THREE.MeshBasicMaterial({ color: new THREE.Color(cat.letrero) }));
+    if (e.cat === 'jefe') for (const s of [-1, 1]) caja(g, l.cx + s * bw * 0.35, alto + 1.2, l.cz, 0.6, 1.2, 0.6, new THREE.MeshBasicMaterial({ color: 0xff3030 }));
+  }
+  solidos.push(rect(l.cx, l.cz, bw, bd));
+  // puerta, marco y letrero en el lado elegido
+  const fx = l.cx + dx * (bw / 2 + 0.03), fz = l.cz + dz * (bd / 2 + 0.03);
+  const marco = new THREE.Mesh(geoPlano, mat(e.cat === 'tienda' ? 0xffb347 : 0x5a5248)); marco.position.set(fx + dx * 0.01, 1.7, fz + dz * 0.01); marco.rotation.y = giro; marco.scale.set(2.9, 3.3, 1); g.add(marco);
+  const puerta = new THREE.Mesh(geoPlano, mat(0x14100c)); puerta.position.set(fx + dx * 0.03, 1.6, fz + dz * 0.03); puerta.rotation.y = giro; puerta.scale.set(2.4, 3, 1); g.add(puerta);
+  if (e.cat === 'tienda') { const toldo = caja(g, fx + dx * 0.9, 3.6, fz + dz * 0.9, dx ? 1.8 : 4.2, 0.2, dx ? 4.2 : 1.8, mat(0xc0502a)); toldo.rotation.set(dz * 0.18, 0, -dx * 0.18); }
+  puertas.push({ x: fx + dx * 1.4, z: fz + dz * 1.4, lote: l });
+  const altoCartel = e.id === 'zafira' ? 3.8 : Math.min(alto - 0.8, 4.6);
+  cartel(g, e, cat, fx + dx * 0.06, altoCartel, fz + dz * 0.06, giro, Math.min(frente * 0.8, 11));
+}
+function cartel(g, e, cat, x, y, z, giro, ancho) {
+  const m = new THREE.Mesh(geoPlano, new THREE.MeshBasicMaterial({ map: letrero(e.nombre, cat.letrero) }));
+  m.material.userData.propio = true; m.position.set(x, y, z); m.rotation.y = giro; m.scale.set(ancho, ancho / 4, 1); g.add(m);
+}
+
+function relleno(r, M, R) {
+  const x0 = D.calle + r.x * PASO, z0 = D.calle + r.y * PASO, cx = x0 + D.lote / 2, cz = z0 + D.lote / 2;
+  const colores = { parque: M.relleno, baldio: 0x5a4a38, carros: M.acera, barricada: M.acera };
+  caja(mundo, cx, 0.08, cz, D.lote, 0.16, D.lote, mat(colores[r.tipo]));
+  if (r.tipo === 'parque') {
+    for (let i = 0; i < 4; i++) {
+      const x = x0 + 2 + R() * (D.lote - 4), z = z0 + 2 + R() * (D.lote - 4), h = 3 + R() * 2;
+      caja(mundo, x, h / 2, z, 0.35, h, 0.35, mat(0x4a3420));
+      const copa = new THREE.Mesh(new THREE.ConeGeometry(1.6, 3.4, 6), mat(0x2e5a2a)); copa.position.set(x, h + 1.2, z); mundo.add(copa);
+    }
+    caja(mundo, cx, 0.5, cz, 3, 0.12, 0.8, mat(0x6a4a2a));
+  } else if (r.tipo === 'baldio') {
+    for (let i = 0; i < 6; i++) { const s = 0.4 + R() * 0.9; const p = caja(mundo, x0 + 1 + R() * (D.lote - 2), s / 2 + 0.16, z0 + 1 + R() * (D.lote - 2), s, s, s, mat(0x6a6058)); p.rotation.y = R() * 3; }
+  } else if (r.tipo === 'carros') {
+    for (let i = 0; i < 2; i++) {
+      const x = x0 + 3 + i * 6, z = z0 + 3 + R() * 6, col = elegir(R, [0x7a2a24, 0x2a4a7a, 0xb8b0a0, 0x3a3a3a, 0x5a6a3a]);
+      caja(mundo, x, 0.75, z, 2, 1, 4.2, mat(col)); caja(mundo, x, 1.55, z - 0.2, 1.8, 0.7, 2.2, mat(0x223038));
+      solidos.push(rect(x, z, 2, 4.2));
+    }
+  } else {
+    for (let i = 0; i < 3; i++) { const z = z0 + 2 + i * 4; caja(mundo, cx, 0.6, z, 6, 1.2, 0.8, mat(0xb09040)); solidos.push(rect(cx, z, 6, 0.8)); }
+  }
+}
+
+// ---------- jugador ----------
+const J = { x: 0, z: 0, giro: 0, cabeceo: 0 };
+const teclas = {};
+let estado = 'inicio', bloqueado = false;
+function moverCon(dx, dz) {
+  const r = D.jugador.radio, choca = (x, z) => x < r || z < r || x > ciudad.ancho - r || z > ciudad.fondo - r || solidos.some(s => x > s.x0 - r && x < s.x1 + r && z > s.z0 - r && z < s.z1 + r);
+  if (!choca(J.x + dx, J.z)) J.x += dx;
+  if (!choca(J.x, J.z + dz)) J.z += dz;
+}
+
+// ---------- partida guardada (se guarda sola en el navegador) ----------
+function leerGuardada() { try { const p = JSON.parse(localStorage.getItem(CLAVE)); return p && p.v === 1 && MAPA[p.mapa] ? p : null; } catch (e) { return null; } }
+function guardar() {
+  if (!ciudad || !ciudad.enJuego) return;
+  const p = { v: 1, semilla: ciudad.semilla, mapa: ciudad.mapa.id, nivel: ciudad.nivel, x: +J.x.toFixed(2), z: +J.z.toFixed(2), giro: +J.giro.toFixed(3), vistos: ciudad.lotes.map((l, i) => l.visto ? i : -1).filter(i => i >= 0), fecha: new Date().toISOString() };
+  try { localStorage.setItem(CLAVE, JSON.stringify(p)); } catch (e) { /* sin espacio o modo privado: se juega igual */ }
+}
+setInterval(() => { if (estado === 'jugar') guardar(); }, 5000);
+addEventListener('visibilitychange', () => { if (document.hidden) { guardar(); if (estado === 'jugar') pausar(); } });
+addEventListener('pagehide', guardar);
+
+// controles de computadora
+addEventListener('keydown', e => {
+  teclas[e.code] = true;
+  if (e.code === 'KeyM' || e.code === 'Tab') { e.preventDefault(); if (estado === 'jugar') abrirMapa(); else if (estado === 'mapa') cerrarMapa(); }
+  if (e.code === 'Escape' && estado === 'mapa') cerrarMapa();
+});
+addEventListener('keyup', e => { teclas[e.code] = false; });
+lienzo.addEventListener('click', () => { if (estado === 'jugar' && !TACTIL && !bloqueado && lienzo.requestPointerLock) lienzo.requestPointerLock(); });
+document.addEventListener('pointerlockchange', () => { bloqueado = document.pointerLockElement === lienzo; if (!bloqueado && estado === 'jugar' && !TACTIL) pausar(); });
+addEventListener('mousemove', e => { if (!bloqueado) return; J.giro -= e.movementX * 0.0022; J.cabeceo = Math.max(-1.3, Math.min(1.3, J.cabeceo - e.movementY * 0.0022)); });
+
+// controles táctiles: dedo izquierdo camina, dedo derecho mira
+const palanca = { id: null, ox: 0, oy: 0, x: 0, y: 0 }, mirada = { id: null, x: 0, y: 0 };
+const elPal = $('#palanca'), elBola = $('#palanca i');
+lienzo.addEventListener('touchstart', e => {
+  if (estado !== 'jugar') return;
+  for (const t of e.changedTouches) {
+    if (t.clientX < innerWidth / 2 && palanca.id === null) { Object.assign(palanca, { id: t.identifier, ox: t.clientX, oy: t.clientY, x: 0, y: 0 }); elPal.style.display = 'block'; elPal.style.left = t.clientX - 60 + 'px'; elPal.style.top = t.clientY - 60 + 'px'; elBola.style.transform = ''; }
+    else if (mirada.id === null) Object.assign(mirada, { id: t.identifier, x: t.clientX, y: t.clientY });
+  }
+  $('#pista-tactil').style.display = 'none';
+}, { passive: true });
+lienzo.addEventListener('touchmove', e => {
+  for (const t of e.changedTouches) {
+    if (t.identifier === palanca.id) {
+      let x = t.clientX - palanca.ox, y = t.clientY - palanca.oy; const d = Math.hypot(x, y), max = 60;
+      if (d > max) { x *= max / d; y *= max / d; }
+      palanca.x = x / max; palanca.y = y / max; elBola.style.transform = `translate(${x}px, ${y}px)`;
+    } else if (t.identifier === mirada.id) {
+      J.giro -= (t.clientX - mirada.x) * 0.0055; J.cabeceo = Math.max(-1.2, Math.min(1.2, J.cabeceo - (t.clientY - mirada.y) * 0.0055));
+      mirada.x = t.clientX; mirada.y = t.clientY;
+    }
+  }
+}, { passive: true });
+const soltar = e => { for (const t of e.changedTouches) { if (t.identifier === palanca.id) { palanca.id = null; palanca.x = palanca.y = 0; elPal.style.display = 'none'; } if (t.identifier === mirada.id) mirada.id = null; } };
+lienzo.addEventListener('touchend', soltar); lienzo.addEventListener('touchcancel', soltar);
+
+// ---------- minimapa y mapa grande ----------
+const mini = $('#mini'), gMini = mini.getContext('2d'), mapaCv = $('#mapa-cv'), gMapa = mapaCv.getContext('2d');
+let mapaEsc = null;
+function dibujarMapa(g, W, H, conNombres, px1 = 1) {
+  const c = ciudad, esc = Math.min(W, H) / Math.max(c.ancho, c.fondo) * 0.94, ox = (W - c.ancho * esc) / 2, oy = (H - c.fondo * esc) / 2;
+  g.clearRect(0, 0, W, H); g.fillStyle = '#0a0e0c'; g.fillRect(0, 0, W, H);
+  g.globalAlpha = 0.7; g.fillStyle = hex(c.mapa.calle); g.fillRect(ox, oy, c.ancho * esc, c.fondo * esc); g.globalAlpha = 1;
+  for (const r of c.rellenos) { g.fillStyle = r.tipo === 'parque' ? '#2e4a2a' : '#3a3630'; g.fillRect(ox + (D.calle + r.x * PASO) * esc, oy + (D.calle + r.y * PASO) * esc, D.lote * esc, D.lote * esc); }
+  for (const l of c.lotes) {
+    g.fillStyle = l.visto ? hex(D.categorias[l.ed.cat].pared) : '#3a3f3c'; g.fillRect(ox + l.x0 * esc, oy + l.z0 * esc, l.ancho * esc, l.fondo * esc);
+    if (!l.visto) continue;
+    g.strokeStyle = D.categorias[l.ed.cat].letrero; g.lineWidth = conNombres ? 3 : 2; g.strokeRect(ox + l.x0 * esc, oy + l.z0 * esc, l.ancho * esc, l.fondo * esc);
+    if (conNombres) {
+      // nombre solo si cabe con letra de 14 px o más; si no, se ve al tocarlo
+      const max = l.ancho * esc - 8 * px1, fs = 14 * px1; g.font = `600 ${fs}px system-ui`;
+      const filas = []; let fila = '';
+      for (const p of l.ed.nombre.split(' ')) { const prueba = fila ? fila + ' ' + p : p; if (g.measureText(prueba).width > max && fila) { filas.push(fila); fila = p; } else fila = prueba; }
+      filas.push(fila);
+      if (filas.some(f => g.measureText(f).width > max) || filas.length * (fs + 2) > l.fondo * esc - 6 * px1) continue;
+      g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = '#000'; g.shadowBlur = 4;
+      filas.forEach((f, i) => g.fillText(f, ox + l.cx * esc, oy + l.cz * esc + (i - (filas.length - 1) / 2) * (fs + 2)));
+      g.shadowBlur = 0;
+    }
+  }
+  // jugador: flecha naranja que apunta hacia donde mira
+  if (conNombres) mapaEsc = { esc, ox, oy, px1 };
+  const px = ox + J.x * esc, py = oy + J.z * esc, s = (conNombres ? 12 : 12) * px1;
+  g.save(); g.translate(px, py); g.rotate(-J.giro); g.fillStyle = '#ff8a1f'; g.strokeStyle = '#fff'; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(0, -s); g.lineTo(s * 0.7, s * 0.8); g.lineTo(0, s * 0.35); g.lineTo(-s * 0.7, s * 0.8); g.closePath(); g.fill(); g.stroke(); g.restore();
+}
+function dibujarMini() { const W = mini.width, H = mini.height; gMini.save(); gMini.beginPath(); gMini.arc(W / 2, H / 2, W / 2, 0, Math.PI * 2); gMini.clip(); dibujarMapa(gMini, W, H, false); gMini.restore(); }
+function abrirMapa() {
+  estado = 'mapa'; if (document.exitPointerLock) document.exitPointerLock();
+  $('#mapa-grande').classList.add('ver'); $('#mapa-info').innerHTML = 'Toca un edificio para ver su nombre';
+  const r = mapaCv.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
+  mapaCv.width = Math.round(r.width * dpr); mapaCv.height = Math.round(r.height * dpr);
+  dibujarMapa(gMapa, mapaCv.width, mapaCv.height, true, dpr);
+}
+mapaCv.addEventListener('click', e => {
+  if (!mapaEsc) return;
+  const r = mapaCv.getBoundingClientRect(), k = mapaCv.width / r.width;
+  const wx = ((e.clientX - r.left) * k - mapaEsc.ox) / mapaEsc.esc, wz = ((e.clientY - r.top) * k - mapaEsc.oy) / mapaEsc.esc;
+  const l = ciudad.lotes.find(l => wx >= l.x0 && wx <= l.x0 + l.ancho && wz >= l.z0 && wz <= l.z0 + l.fondo);
+  $('#mapa-info').innerHTML = !l ? 'Calle' : l.visto ? `${l.ed.nombre}<small>${D.categorias[l.ed.cat].nombre}</small>` : 'Edificio sin explorar<small>Acércate para saber qué es</small>';
+});
+$('#leyenda').innerHTML = Object.values(D.categorias).map(c => `<span style="--c:${hex(c.pared)};--b:${c.letrero}">${c.nombre}</span>`).join('') + '<span style="--c:#3a3f3c;--b:#3a3f3c">Sin explorar</span>';
+function cerrarMapa() { $('#mapa-grande').classList.remove('ver'); estado = 'jugar'; }
+mini.addEventListener('click', abrirMapa); mini.addEventListener('touchend', e => { e.preventDefault(); abrirMapa(); });
+$('#btn-cerrar-mapa').addEventListener('click', cerrarMapa);
+
+// ---------- pantallas ----------
+let previa = null; // la ciudad nueva que se ve en el inicio
+function prepararCiudad(s, m, nv) {
+  const nivel = nv || 1, mapaId = m || mapaDelNivel(s, nivel);
+  ciudad = generarCiudad(s, mapaId, nivel); construir(ciudad);
+  J.x = Math.round(ciudad.mapa.w / 2) * PASO + D.calle / 2; J.z = ciudad.fondo - D.calle / 2; J.giro = 0; J.cabeceo = 0;
+  $('#lugar').innerHTML = `<b>${ciudad.mapa.nombre}</b><br>Semilla ${s}`;
+  return ciudad;
+}
+function mostrarInicio() {
+  const g = leerGuardada();
+  $('#btn-continuar').hidden = !g; $('#guardada-txt').hidden = !g;
+  $('#btn-nueva').classList.toggle('principal', !g);
+  if (g) $('#guardada-txt').innerHTML = `Partida guardada: <b>${MAPA[g.mapa].nombre}</b><br>Semilla ${g.semilla} · ${g.vistos.length} edificios vistos`;
+  $('#ciudad-txt').innerHTML = `Ciudad nueva: <b>${MAPA[previa.mapa].nombre}</b> · Semilla ${previa.semilla}`;
+  document.querySelectorAll('.chip').forEach(ch => ch.classList.toggle('activo', ch.dataset.m === previa.mapa));
+  prepararCiudad(previa.semilla, previa.mapa, previa.nivel); // de fondo se ve la ciudad nueva
+  estado = 'inicio'; $('#pausa').classList.remove('ver'); $('#hud').classList.remove('ver'); $('#inicio').classList.add('ver');
+}
+function nuevaPrevia(s, m) { const nivel = m ? MAPA[m].nivel : 1; previa = { semilla: s, mapa: m || mapaDelNivel(s, nivel), nivel }; }
+function jugar() {
+  ciudad.enJuego = true; estado = 'jugar'; guardar();
+  $('#inicio').classList.remove('ver'); $('#pausa').classList.remove('ver'); $('#hud').classList.add('ver');
+  if (TACTIL) $('#pista-tactil').style.display = 'block'; else if (lienzo.requestPointerLock) lienzo.requestPointerLock();
+  history.replaceState(null, '', location.pathname);
+}
+function continuar() {
+  const g = leerGuardada(); if (!g) return;
+  prepararCiudad(g.semilla, g.mapa, g.nivel);
+  for (const i of g.vistos) if (ciudad.lotes[i]) ciudad.lotes[i].visto = true;
+  J.x = g.x; J.z = g.z; J.giro = g.giro || 0;
+  jugar();
+}
+function nuevaPartida() { prepararCiudad(previa.semilla, previa.mapa, previa.nivel); jugar(); nuevaPrevia(semillaNueva()); }
+function pausar() { if (estado !== 'jugar') return; estado = 'pausa'; guardar(); $('#pausa-txt').innerHTML = `${ciudad.mapa.nombre} · Semilla ${ciudad.semilla}<br>Edificios vistos: ${ciudad.lotes.filter(l => l.visto).length} de ${ciudad.lotes.length}<br><small>La partida se guarda sola.</small>`; $('#pausa').classList.add('ver'); }
+$('#btn-continuar').addEventListener('click', continuar);
+$('#btn-nueva').addEventListener('click', nuevaPartida);
+$('#btn-otra').addEventListener('click', () => { nuevaPrevia(semillaNueva()); mostrarInicio(); });
+$('#btn-seguir').addEventListener('click', jugar);
+$('#btn-inicio').addEventListener('click', () => { guardar(); mostrarInicio(); });
+$('#btn-pausa').addEventListener('click', () => { if (document.exitPointerLock) document.exitPointerLock(); pausar(); });
+for (const m of D.mapas) { const b = document.createElement('button'); b.className = 'chip'; b.dataset.m = m.id; b.textContent = m.nombre; b.onclick = () => { nuevaPrevia(previa.semilla, m.id); mostrarInicio(); }; $('#chips').appendChild(b); }
+$('#ayuda').innerHTML = TACTIL
+  ? 'Dedo izquierdo en la pantalla: caminar (llévalo hasta el borde para correr).<br>Dedo derecho: mirar alrededor.<br>Toca el minimapa para ver el mapa grande.'
+  : 'W A S D: caminar · Mayúscula: correr · Ratón: mirar<br>M: mapa grande · Esc: pausa';
+
+// ---------- ciclo del juego ----------
+let antes = performance.now(), cuentaMini = 0;
+function cuadro(ahora) {
+  requestAnimationFrame(cuadro);
+  const dt = Math.min(0.05, (ahora - antes) / 1000); antes = ahora;
+  if (!ciudad) return;
+  if (estado === 'jugar') {
+    let fx = 0, fz = 0, corre = teclas.ShiftLeft || teclas.ShiftRight;
+    if (teclas.KeyW || teclas.ArrowUp) fz -= 1; if (teclas.KeyS || teclas.ArrowDown) fz += 1;
+    if (teclas.KeyA || teclas.ArrowLeft) fx -= 1; if (teclas.KeyD || teclas.ArrowRight) fx += 1;
+    if (palanca.id !== null) { fx = palanca.x; fz = palanca.y; corre = Math.hypot(fx, fz) > 0.92; }
+    const largo = Math.hypot(fx, fz);
+    if (largo > 0.05) {
+      if (largo > 1) { fx /= largo; fz /= largo; }
+      const v = D.jugador.velocidad * (corre ? D.jugador.correr : 1) * dt, s = Math.sin(J.giro), c = Math.cos(J.giro);
+      moverCon((fx * c + fz * s) * v, (-fx * s + fz * c) * v);
+    }
+    // edificios a la vista y puerta cercana
+    for (const l of ciudad.lotes) if (!l.visto && Math.max(Math.abs(J.x - l.cx) - l.ancho / 2, Math.abs(J.z - l.cz) - l.fondo / 2, 0) < D.jugador.verDesde) l.visto = true;
+    let cerca = null, dmin = D.jugador.puertaCerca;
+    for (const p of puertas) { const d = Math.hypot(J.x - p.x, J.z - p.z); if (d < dmin) { dmin = d; cerca = p; } }
+    const aviso = $('#aviso');
+    if (cerca) { aviso.style.display = 'block'; aviso.innerHTML = `${cerca.lote.ed.nombre}<small>${D.categorias[cerca.lote.ed.cat].nombre} · pronto podrás entrar</small>`; }
+    else aviso.style.display = 'none';
+  }
+  camara.position.set(J.x, D.jugador.alto, J.z); camara.rotation.set(J.cabeceo, J.giro, 0);
+  render.render(escena, camara);
+  if (estado === 'jugar' && ++cuentaMini % 3 === 0) dibujarMini();
+}
+function ajustar() { render.setSize(innerWidth, innerHeight, false); camara.aspect = innerWidth / innerHeight; camara.updateProjectionMatrix(); }
+addEventListener('resize', ajustar); ajustar();
+
+// una dirección como ?semilla=12345&mapa=centro abre esa ciudad en el inicio
+const q = new URLSearchParams(location.search);
+nuevaPrevia(+q.get('semilla') || semillaNueva(), MAPA[q.get('mapa')] ? q.get('mapa') : null);
+mostrarInicio();
+requestAnimationFrame(cuadro);
+window.__pc = { get ciudad() { return ciudad; }, get estado() { return estado; }, J, generarCiudad, continuar, nuevaPartida, guardar, leerGuardada, abrirMapa };
+</script>
 </body>
 </html>
