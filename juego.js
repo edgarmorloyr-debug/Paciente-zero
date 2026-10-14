@@ -440,20 +440,22 @@ window.JUEGO = (() => {
     solidosCiudad = solidos; solidos = []; limites = { x0, x1: x0 + ancho, z0, z1: z0 + fondo };
     salaG = new THREE.Group(); escena.add(salaG); bajoTecho = true;
     const cat = e.cat, R = azar(ciudad.semilla * 1000 + idx * 7 + P.nivel);
-    caja(salaG, OX, -0.05, OZ, ancho, 0.1, fondo, mat(COL_SALA.piso[cat]));
-    const pared = mat(COL_SALA.pared[cat]), alto = 3.6;
-    caja(salaG, OX, alto / 2, z0 - 0.2, ancho + 0.8, alto, 0.4, pared);
-    caja(salaG, x0 - 0.2, alto / 2, OZ, 0.4, alto, fondo, pared); caja(salaG, x0 + ancho + 0.2, alto / 2, OZ, 0.4, alto, fondo, pared);
+    const piso = caja(salaG, OX, -0.05, OZ, ancho, 0.1, fondo, mat(COL_SALA.piso[cat]));
+    const pared = mat(COL_SALA.pared[cat]), alto = 3.6, paredes = [];
+    paredes.push(caja(salaG, OX, alto / 2, z0 - 0.2, ancho + 0.8, alto, 0.4, pared));
+    paredes.push(caja(salaG, x0 - 0.2, alto / 2, OZ, 0.4, alto, fondo, pared), caja(salaG, x0 + ancho + 0.2, alto / 2, OZ, 0.4, alto, fondo, pared));
     const lado = (ancho - 2.4) / 2;
-    caja(salaG, x0 + lado / 2, alto / 2, z0 + fondo + 0.2, lado, alto, 0.4, pared); caja(salaG, x0 + ancho - lado / 2, alto / 2, z0 + fondo + 0.2, lado, alto, 0.4, pared);
+    paredes.push(caja(salaG, x0 + lado / 2, alto / 2, z0 + fondo + 0.2, lado, alto, 0.4, pared), caja(salaG, x0 + ancho - lado / 2, alto / 2, z0 + fondo + 0.2, lado, alto, 0.4, pared));
     caja(salaG, OX, alto - 0.3, z0 + fondo + 0.2, 2.4, 0.6, 0.4, pared);
-    caja(salaG, OX, alto + 0.05, OZ, ancho + 0.8, 0.1, fondo + 0.8, mat(0x2a2622));
+    caja(salaG, OX, alto + 0.05, OZ, ancho + 0.8, 0.1, fondo + 0.8, mat(0x7a7268));
     const pm = new THREE.MeshBasicMaterial({ color: 0x9be37a, transparent: true, opacity: 0.3 }); caja(salaG, OX, 1.5, z0 + fondo + 0.3, 2.4, 3, 0.05, pm);
     const luz = new THREE.PointLight(cat === 'minijuego' ? 0xd0a0ff : cat === 'jefe' ? 0xff7060 : 0xffe0b0, 1.4, Math.max(ancho, fondo) * 1.4, 1.2); luz.position.set(OX, alto - 0.4, OZ); salaG.add(luz);
     salaG.add(new THREE.AmbientLight(0x909090, 0.5));
     const mueble = (x, z, w, d, h, color) => { caja(salaG, x, h / 2, z, w, h, d, mat(color)); const s = rect(x, z, w, d); s.alto = h; solidos.push(s); };
     const libre = (m = 2) => { for (let i = 0; i < 40; i++) { const x = x0 + m + R() * (ancho - m * 2), z = z0 + m + R() * (fondo - m * 2 - 2); if (!solidos.some(s => x > s.x0 - 1.2 && x < s.x1 + 1.2 && z > s.z0 - 1.2 && z < s.z1 + 1.2)) return { x, z }; } return { x: OX + (R() - 0.5) * 3, z: OZ - 1 }; };
-    const nMuebles = cat === 'tienda' || cat === 'minijuego' || idx === P.guarida ? 0 : Math.floor(ancho * fondo / 90);
+    // muebles: el decorado arma cada lugar según lo que es; si no está, unas cajas sueltas
+    if (window.DECO) DECO.sala({ grupo: salaG, e: idx === P.guarida ? { ...e, cat: 'comun', id: 'guarida' } : e, x0, z0, ancho, fondo, R, mueble, libre, pisoMesh: piso, paredes });
+    const nMuebles = window.DECO || cat === 'tienda' || cat === 'minijuego' || idx === P.guarida ? 0 : Math.floor(ancho * fondo / 90);
     for (let i = 0; i < nMuebles; i++) { const p = libre(2.5); mueble(p.x, p.z, 1 + R() * 2.5, 0.8 + R() * 1.2, 0.9 + R() * 1.0, escoger([0x5a4030, 0x4a4a50, 0x6a5a40])); }
     J.x = dentro.salida.x; J.z = dentro.salida.z - 0.6; J.giro = 0;
     contenido(R, st, libre, mueble);
@@ -470,6 +472,7 @@ window.JUEGO = (() => {
     for (const r of recogibles.filter(r => r.zona === dentro.idx)) { escena.remove(r.m); recogibles.splice(recogibles.indexOf(r), 1); }
     for (const p of proys.slice()) { escena.remove(p.m); proys.splice(proys.indexOf(p), 1); }
     objetivos.length = 0; usables = [];
+    if (window.DECO) DECO.salirSala();
     escena.remove(salaG); salaG = null; solidos = solidosCiudad; limites = null; dentro = null; bajoTecho = false;
     J.x = afuera.x; J.z = afuera.z; J.giro = afuera.giro + Math.PI;
     Snd.tocar('door_close.mp3', 0.6); guardar();

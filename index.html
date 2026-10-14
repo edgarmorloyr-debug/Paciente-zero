@@ -220,6 +220,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="datos.js"></script>
 <script src="kit.js"></script>
+<script src="decorado.js"></script>
 <script>
 'use strict';
 const D = window.DATOS, $ = s => document.querySelector(s);
@@ -347,6 +348,7 @@ const rect = (cx, cz, w, d) => ({ x0: cx - w / 2, x1: cx + w / 2, z0: cz - d / 2
 function construir(c) {
   if (mundo) { escena.remove(mundo); mundo.traverse(o => { if (o.material && o.material.userData.propio) { o.material.map.dispose(); if (o.material.emissiveMap) o.material.emissiveMap.dispose(); o.material.dispose(); } }); }
   mundo = new THREE.Group(); escena.add(mundo); solidos = []; puertas = []; matsVentana = [];
+  if (window.DECO) DECO.empezar();
   const M = c.mapa, R = azar(c.semilla + 1);
   // la luz y el cielo los maneja el ambiente (hora y clima), cuadro a cuadro
   luzHemi = new THREE.HemisphereLight(0xffffff, 0x202018, 1); luzSol = new THREE.DirectionalLight(0xffffff, 0.8); mundo.add(luzHemi, luzSol, luzSol.target);
@@ -370,6 +372,7 @@ function construir(c) {
   caja(mundo, -0.3, 0.6, c.fondo / 2, 0.6, 1.2, c.fondo, barrera); caja(mundo, c.ancho + 0.3, 0.6, c.fondo / 2, 0.6, 1.2, c.fondo, barrera);
   for (const l of c.lotes) edificio(l, M);
   for (const r of c.rellenos) relleno(r, M, R);
+  if (window.DECO) DECO.ciudad(c, mundo, azar(c.semilla + 5)); // autos, fuego, basura y todo lo que se dibuja junto
 }
 
 function edificio(l, M) {
@@ -421,6 +424,7 @@ function edificio(l, M) {
   // el letrero va justo encima de la puerta, aunque el edificio sea bajo
   const anchoCartel = Math.min(frente * 0.8, 7), altoCartel = 3 + anchoCartel / 8;
   cartel(g, e, cat, fx + dx * 0.06, altoCartel, fz + dz * 0.06, giro, anchoCartel);
+  if (window.DECO) DECO.fachada({ g, l, e, cat, bw, bd, alto, dx, dz, giro, fx, fz, R: azar(Math.round(l.cx * 13 + l.cz * 7) + ciudad.semilla) });
 }
 function cartel(g, e, cat, x, y, z, giro, ancho) {
   const m = new THREE.Mesh(geoPlano, new THREE.MeshBasicMaterial({ map: letrero(e.nombre, cat.letrero) }));
@@ -553,6 +557,7 @@ function pintarAmbiente(dt) {
     for (let i = 0; i < GOTAS * 6; i += 6) { pos[i + 1] -= caida; pos[i + 4] -= caida; if (pos[i + 4] < 0) { pos[i + 1] += 24; pos[i + 4] += 24; } }
     lluviaGeo.attributes.position.needsUpdate = true; lluvia.position.set(camara.position.x, 0, camara.position.z);
   }
+  if (window.DECO) DECO.animar(dt, noche); // fuego, humo y luces que parpadean
 }
 function textoAmbiente() { const m = momentoDe(amb.hora); return `${horaTexto(amb.hora)} · ${m.nombre} · ${CLIMA[amb.clima].nombre}${amb.lunaRoja ? ' · Luna roja' : ''}`; }
 function listaEfectos() {
